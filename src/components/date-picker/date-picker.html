@@ -1,0 +1,7 @@
+<a-date-picker v-model="mValue" ref="datePicker" :format="mFormat" :valueFormat="mValueFormat" allowClear :dropdownClassName="dropdownClass" @change="handleChange" @openChange="handleOpenChange" :open="mOpen" @click.native="handleClick" @keydown.enter.native="handleKeydown" @keydown.40.native="handleKeydown">
+  <template slot="dateRender" slot-scope="current, today">
+    <div class="ant-calendar-date">
+      {{ current.date() }}
+    </div>
+  </template>
+</a-date-picker>

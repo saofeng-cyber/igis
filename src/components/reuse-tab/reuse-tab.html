@@ -1,0 +1,22 @@
+<div class="ms-reuse-tab">
+  <router-link v-for="tag in visitedViews" ref="tag" :key="tag.path" :class="[isActive(tag) ? 'active' : '', isAffix(tag) ? '' : 'close']" :to="{path: tag.path}" tag="span" class="ms-reuse-tab__item"
+    @click.middle.native="!isAffix(tag) ? closeSelectedTag(tag) : ''" @contextmenu.prevent.stop.native="openMenu(tag, $event)">
+    {{ tag.title }}
+    <template v-if="tag.badge > 0">({{ tag.badge }})</template>
+    <span v-if="visitedViews.length > 1" class="iconfont icon-guanbi1 l-padding m-font" @click.prevent.stop="closeSelectedTag(tag)"></span>
+  </router-link>
+  <ul v-show="visible" :style="{left: left + 'px', top: top + 'px'}" class="contextmenu">
+    <li @click="refreshSelectedTag(selectedTag)">
+      {{ $t('tagsView.refresh') }}
+    </li>
+    <li v-if="!isAffix(selectedTag) && visitedViews.length > 1" @click="closeSelectedTag(selectedTag)">
+      {{ $t('tagsView.close') }}
+    </li>
+    <li @click="closeOthersTags">
+      {{ $t('tagsView.closeOthers') }}
+    </li>
+    <!-- <li @click="closeAllTags(selectedTag)">
+      {{ $t('tagsView.closeAll') }}
+    </li> -->
+  </ul>
+</div>

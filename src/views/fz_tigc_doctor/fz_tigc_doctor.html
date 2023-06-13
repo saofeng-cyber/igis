@@ -1,0 +1,115 @@
+<a-card title="统计医生工作量" style="height: 100vh; position: relative">
+  <div
+    style="
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: calc(100vh - 64px);
+    "
+  >
+    <div class="form">
+      <a-form layout="inline" :form="formBuild">
+        <a-form-item label="姓名">
+          <a-input v-model="formBuild.hisCreaterName"></a-input>
+        </a-form-item>
+        <a-form-item label="分诊诊室名称">
+          <a-select
+            allowClear
+            style="width: auto; min-width: 250px"
+            show-search
+            option-filter-prop="children"
+            :filter-option="filterOption"
+            placeholder="请选择"
+            v-model="formBuild.roomId"
+            :dropdownMatchSelectWidth="true"
+          >
+            <a-select-option v-for="item in roomList" :key="item.roomId">
+              <template>
+                <a-row>
+                  <a-col> {{ item.roomName }} </a-col>
+                </a-row>
+              </template>
+            </a-select-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item label="工作时间范围" prop="afternoonAppointmentTime">
+          <a-range-picker
+            :placeholder="['开始时间', '结束时间']"
+            v-model="formBuild.dateList"
+            :showTime="defaultShowTime"
+            valueFormat="YYYY-MM-DD HH:mm:SS"
+          >
+          </a-range-picker>
+        </a-form-item>
+        <a-form-item>
+          <a-button
+            size="small"
+            type="primary"
+            @click="getTableData"
+            style="margin: 0 6px"
+            >查询</a-button
+          >
+          <a-button
+            size="small"
+            type="primary"
+            @click="reset"
+            style="margin: 0 6px"
+            >重置</a-button
+          >
+          <a-button
+            size="small"
+            type="warning"
+            @click="exportData"
+            style="margin: 0 6px"
+            >导出</a-button
+          >
+        </a-form-item>
+      </a-form>
+    </div>
+    <div class="vertablt-tab">
+      <a-table
+        class="visitRecord"
+        :columns="columns"
+        :pagination="false"
+        bordered
+        :data-source="dataSource"
+        style="height: 100%"
+      >
+        <span slot="waitDateNumPeopleOfRoomAll" slot-scope="text, record">
+          <span style="color: #409eff; cursor: pointer">{{ text }}</span>
+        </span>
+        <span slot="waitDateNumPeopleOfRoomSmc" slot-scope="text, record"
+          ><span style="color: #409eff; cursor: pointer">{{ text }}</span></span
+        >
+        <span slot="waitDateNumPeopleOfRoomTigc" slot-scope="text, record">
+          <span style="color: #409eff; cursor: pointer">{{ text }}</span>
+        </span>
+      </a-table>
+    </div>
+    <p style="padding: 12px; text-align: right">
+      <a-pagination
+        :show-total="total => `共 ${total} 条工作记录`"
+        show-quick-jumper
+        :current="formBuild.pageNum"
+        show-size-changer
+        :pageSize="formBuild.pageSize"
+        :total="total"
+        @change="onStatePageChange"
+        @showSizeChange="onShowSizeChange"
+      />
+    </p>
+  </div>
+  <a-modal
+    title="分诊工作量统计文档说明"
+    :closable="true"
+    :visible="visibleHelp"
+    @ok="onCloseHelp"
+    @cancel="onCloseHelp"
+  >
+    <p style="font-weight: 500">
+      分诊工作量统计包含：<strong
+        >门诊诊室的科室、平均等待时间（最后一次叫号时间-分诊时间）、预约平均等待时间（最后一次叫号时间-预约时间）、统计人数。</strong
+      >
+    </p>
+  </a-modal>
+</a-card>

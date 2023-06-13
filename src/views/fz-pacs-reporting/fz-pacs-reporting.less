@@ -1,0 +1,303 @@
+.page {
+  padding: 0 10px;
+  background-color: #2e81a5;
+  height: 100vh;
+  animation: colorTimer ease-in .25s forwards;
+
+  @keyframes colorTimer {
+    0% {
+      transform: translateY(30px);
+    }
+    100% {
+      transform: translateY(0px);
+    }
+  }
+
+  .top {
+    margin-top: 12px;
+    height: 150px;
+    background-color: #ffffff;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: -12px 10px 16px #1ba6e1c3;
+
+    .avatar {
+      padding-left: 15px;
+      width: 32%;
+      height: auto;
+      text-align: center;
+    }
+
+    .center {
+      display: flex;
+      justify-content: space-between;
+      padding: 0 15px;
+      align-items: center;
+      flex: 1;
+
+      .title {
+        width: 64%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+        p {
+          font-size: 5vh;
+          margin: 0;
+          padding: 0;
+          text-align: center;
+          font-weight: 500;
+          letter-spacing: 8px;
+        }
+      }
+
+      .title-shuping {
+        width: 64%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+        p {
+          font-size: 3vw;
+          margin: 0;
+          text-align: center;
+          font-weight: 600;
+          letter-spacing: 8px;
+        }
+      }
+
+      .datetime {
+        width: 36%;
+        text-align: center;
+
+        p {
+          margin: 0;
+          padding: 0;
+          font-size: 18px;
+        }
+      }
+
+      .datetime-shuping {
+        width: 36%;
+        text-align: center;
+
+        p {
+          margin: 0;
+          padding: 0;
+          font-size: 2vh;
+        }
+      }
+    }
+
+    .time {
+      width: 100px;
+
+      p {
+        font-size: 32px;
+        margin: 0;
+        padding: 0;
+      }
+    }
+  }
+
+  .bottom {
+    overflow: hidden;
+    z-index: 99;
+    flex: 1;
+
+    .btn {
+      background-color: #ffffff;
+      margin: 18px 0;
+      text-align: center;
+    }
+
+    .content {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      border-radius: 8px;
+      height: calc(100% - 38px);
+      background-color: #ffffff;
+      box-shadow: 0 0 4px #55aee6c3;
+      /deep/ .card-reader-box {
+        height: 100px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background-color: #ffffff;
+        .card-reader-input {
+          width: calc(100% - 10vh);
+          height: 100%;
+          font-size: 3.2vh !important;
+        }
+        .btn-box {
+          width: 100px;
+          height: 100px;
+          background-color: #ffffff;
+          .card-reader-button {
+            width: calc(100% - 18px);
+            height: 100%;
+            background: #1890ff !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 27px;
+            img {
+              display: none;
+            }
+          }
+          .medical-box-button {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            background-color: #1890ff;
+          }
+        }
+      }
+
+      .content-left-shuping {
+        .content-inline {
+          display: flex;
+          justify-content: space-between;
+          .reset,
+          .duka {
+            font-size: 27px;
+            height: 100px;
+            width: 100px;
+            padding: 0;
+            margin-left: 16px;
+          }
+        }
+
+        .first-col,
+        .second-col,
+        .three-col {
+          text-align: center;
+          display: flex;
+          justify-content: space-between;
+          margin: 20px 0;
+
+          button {
+            font-size: 27px;
+            height: 100px;
+            width: 100px;
+            padding: 0;
+            margin-top: 24px;
+          }
+        }
+      }
+    }
+  }
+
+  .dialog {
+    .tip-dialog {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translateY(-50%);
+      transform: translateX(-50%);
+      width: auto;
+      background: #fff;
+      opacity: 0.9;
+      height: 20vh;
+      text-align: center;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border-radius: 2vh;
+      color: #1890ff;
+      font-size: 5vh;
+      z-index: 99999999;
+    }
+
+    .tip-dialog-shuping {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translateY(-50%);
+      transform: translateX(-50%);
+      width: 80vw;
+      background: #fff;
+      opacity: 0.9;
+      min-height: 12vh;
+      text-align: center;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border-radius: 2vh;
+      color: #1890ff;
+      font-size: 3.6vh;
+      z-index: 99999999;
+      padding: 5px;
+    }
+
+    .hengping-card {
+      position: fixed;
+      left: 50%;
+      top: 10%;
+      transform: translateY(-50%);
+      transform: translateX(-50%);
+      width: 50vw;
+      background: #fff;
+      // opacity: 0.9;
+      height: 50vh;
+      text-align: center;
+      line-height: 20vh;
+      border-radius: 2vh;
+      color: #1890ff;
+      font-size: 5vh;
+      z-index: 99999999;
+    }
+
+    .shuping-card {
+      position: fixed;
+      left: 50%;
+      top: 25%;
+      transform: translateY(-50%);
+      transform: translateX(-50%);
+      width: 80vw;
+      background: #fff;
+      // opacity: 0.9;
+      height: auto;
+      border-radius: 2vh;
+      color: #1890ff;
+      font-size: 5vh;
+      z-index: 99999999;
+    }
+  }
+}
+
+/deep/ .ant-table {
+  font-size: 3.2vh;
+}
+
+/deep/ .ant-modal-title {
+  font-size: 3.2vh;
+}
+
+/deep/ .ant-modal-close-x {
+  font-size: 3.2vh;
+}
+
+.setting {
+  position: absolute;
+  bottom: 24px;
+  right: 16px;
+  transition: all 2.5s;
+
+  .setIcon {
+    font-size: 4vh;
+  }
+
+  .setIcon:hover {
+    transform: rotate(360deg);
+  }
+  /deep/ .result-sub-title {
+    font-size: 3vh;
+  }
+}

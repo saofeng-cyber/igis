@@ -1,0 +1,119 @@
+<div class="page">
+  <div style="display: flex;flex-direction: column;height: 100%;">
+    <div class="top">
+      <div class="avatar">
+        <img :src="arealogo" alt="" style="width: 100%;height: 100%;" />
+      </div>
+      <div class="center">
+        <div :class="isShuPing?'title-shuping':'title'">
+          <p>PACS自助报到机</p>
+        </div>
+        <div :class="isShuPing?'datetime-shuping':'datetime'">
+          <p>{{nowDate.split(" ")[1]}}</p>
+          <p>{{nowDate.split(" ")[0]}}</p>
+        </div>
+      </div>
+      <div class="time">
+        <p>{{nowTime}}</p>
+      </div>
+      <!--  -->
+    </div>
+    <!-- <div style="background-color: #3c3d51;flex: 1"> -->
+    <div class="bottom">
+      <div class="btn"></div>
+      <div class="content">
+        <div class="content-left-shuping">
+          <div class="content-inline" style="display: flex;">
+            <cardReader ref="readCard" allowRecordScene="tigc" @read="read" style="flex: 1"></cardReader>
+            <a-button class="duka" type="primary" @click="backSpace">重置</a-button>
+            <!-- <a-input class="aInput" ref="aInput" @pressEnter="readSelfCard" v-model:value="cardNo" placeholder="请输入" />
+              <a-button class="duka" type="primary" @click="backSpace">回删</a-button>
+              <a-button class="reset" type="primary" size="large" @click="resetCard">重置</a-button> -->
+          </div>
+          <div class="first-col">
+            <a-button size="large" type="primary" @click="add('1')">1</a-button>
+            <a-button size="large" type="primary" @click="add('2')">2</a-button>
+            <a-button size="large" type="primary" @click="add('3')">3</a-button>
+            <a-button size="large" type="primary" @click="add('4')">4</a-button>
+          </div>
+          <div class="second-col">
+            <a-button size="large" type="primary" @click="add('5')">5</a-button>
+            <a-button size="large" type="primary" @click="add('6')">6</a-button>
+            <a-button size="large" type="primary" @click="add('7')">7</a-button>
+            <a-button size="large" type="primary" @click="add('8')">8</a-button>
+          </div>
+          <div class="three-col">
+            <a-button size="large" type="primary" @click="add('9')">9</a-button>
+            <a-button size="large" type="primary" @click="add('0')">0</a-button>
+            <a-button size="large" type="primary" @click="add('X')">X</a-button>
+            <a-button class="duka" type="primary" @click="readCard">
+              确定
+            </a-button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- </div> -->
+  </div>
+  <div class="dialog">
+    <a-modal :visible.async="visible" :footer="null" :maskClosable="false" width="80%" title="项目记录" @cancel="handleCancel">
+      <a-table v-if="isShuPing" tableLayout="fixed" :columns="columns" :pagination="false" :data-source="tableData" bordered size="middle" :rowKey="record => record.applyMainId">
+        <template slot="orderName" slot-scope="text, record">
+          <span style="font-size: 2vh;">
+            {{ text }}
+          </span>
+        </template>
+        <template slot="apponitmentdDate" slot-scope="text, record">
+          <span style="font-size: 2vh;">{{ record.selectedDate + '\t' + record.planTimeName }}</span>
+        </template>
+        <template slot="roomName" slot-scope="text, record">
+          <a-tag :color="text.length > 15 ? 'geekblue' : 'green'">
+            {{ text }}
+          </a-tag>
+        </template>
+        <template slot="operate" slot-scope="text, record">
+          <a-button type="primary" @click="signIn(record)" :disabled="record.isPay === '1'" size="large">
+            {{ record.isPay === '1' ? '未缴费' : '签到' }}
+          </a-button>
+        </template>
+      </a-table>
+      <a-table v-else :columns="columns" tableLayout="fixed" :pagination="false" :data-source="tableData" bordered size="middle" :rowKey="record => record.orderId">
+        <template slot="orderName" slot-scope="text, record">
+          <span style="font-size: 3vh;">
+            {{ text }}
+          </span>
+        </template>
+        <template slot="apponitmentdDate" slot-scope="text, record" style="font-size: 2.5vh;">
+          <div>
+            {{ record.selectedDate }}
+          </div>
+          <span>
+            {{ record.planTimeName }}
+          </span>
+        </template>
+        <template slot="roomName" slot-scope="text, record">
+          <a-tag :color="text.length > 15 ? 'geekblue' : 'green'" style="font-size: 2.5vh;padding: 1.0vh;">
+            {{ text }}
+          </a-tag>
+        </template>
+        <template slot="operate" slot-scope="text, record">
+          <a-button type="primary" @click="signIn(record)" :disabled="record.isPay === '1'" size="large">
+            {{ record.isPay === '1' ? '未缴费' : '签到' }}
+          </a-button>
+        </template>
+      </a-table>
+      <div style="font-size: 3vh;width: 100%;text-align: center">当前界面将在{{ second }}秒之后关闭</div>
+    </a-modal>
+    <div :class="isShuPing?'tip-dialog-shuping':'tip-dialog'" v-if="message.flag">
+      <div>{{message.text}}</div>
+    </div>
+    <a-card :class="isShuPing?'shuping-card':'hengping-card'" v-if="appointmentToSignIn">
+      <a-result class="card-result" :title="resultTitle" :status="resultType">
+        <template #subTitle>
+          <a-row class="result-sub-title" style="font-size: 3vh;"> {{ resultSubTitle }}</a-row>
+        </template>
+        <template #extra> </template>
+      </a-result>
+    </a-card>
+  </div>
+</div>

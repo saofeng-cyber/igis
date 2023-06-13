@@ -1,0 +1,479 @@
+<div class="tigc_guidance_main" ref="tigcGuidanceMain">
+  <div class="tigc-guidance-top">
+    <a-row :gutter="18">
+      <a-col :span="24">
+        <div
+          style="
+            font-size: 16px;
+            font-weight: 500;
+            color: rgb(31, 34, 37);
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            width: 100%;
+            justify-content: space-between;
+          "
+        >
+          <div style="display: flex; align-items: center">
+            <div
+              style="
+                height: 32px;
+                width: 32px;
+                border: 1px solid rgb(70, 143, 246);
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+              "
+            >
+              <a-icon
+                type="appstore"
+                style="color: rgb(86, 141, 243); font-size: 18px"
+              />
+            </div>
+            <div style="margin-left: 8px">主要场景配置</div>
+          </div>
+          <a-tooltip placement="left" title="点击查看上线导引操作文档">
+            <a-icon
+              theme="filled"
+              type="question-circle"
+              @click="openHelpReadMe"
+              style="float: right; cursor: pointer; color: #3491fa"
+            />
+          </a-tooltip>
+        </div>
+      </a-col>
+      <a-row
+        class="tigc-guidance-list"
+        type="flex"
+        justify="start"
+        :gutter="16"
+      >
+        <a-col
+          class="tigc-guidance-list-item"
+          :xs="{ span: 24}"
+          :sm="{ span: 24}"
+          :md="{ span: 12}"
+          :xl="{ span: 8}"
+          :xxl="{ span: 6}"
+          v-for="(item, index) in guidanceList"
+          :key="index"
+        >
+          <div class="guidance-item-child">
+            <header class="header-col">
+              <div class="header-cybar" :style="{backgroundColor: item.color}">
+                {{ item.alias }}
+              </div>
+              <div
+                style="
+                  margin: 0 10px;
+                  font-weight: bold;
+                  font-size: 18px;
+                  font-family: sans-serif;
+                "
+              >
+                {{ item.sceneName }}
+              </div>
+            </header>
+            <div class="guidance-item-bottom">
+              <div style="text-align: center">
+                <div style="text-align: left; margin: 12px 0">
+                  <a-button
+                    type="link"
+                    icon="container"
+                    style="color: rgb(31, 34, 37)"
+                  >
+                    <a-tag :color="item.planName=== '暂无指定方案'?'':'#e60'"
+                      >{{ item.planName }}</a-tag
+                    >
+                  </a-button>
+                </div>
+                <div style="text-align: left; margin: 12px 0">
+                  <a-button
+                    type="link"
+                    icon="container"
+                    style="color: rgb(31, 34, 37)"
+                    >{{ item.hisUpdateTime }}
+                  </a-button>
+                </div>
+              </div>
+              <div style="display: flex; flex-direction: column">
+                <a-button
+                  type="primary"
+                  style="margin: 4px 0"
+                  @click="toSysConfig(item)"
+                  :disabled="item.baseData"
+                >
+                  配置步骤说明</a-button
+                >
+                <a-button
+                  type="primary"
+                  style="margin: 4px 0"
+                  @click="toSysConfig2(item)"
+                  :disabled="item.configureSet"
+                >
+                  分诊方案设置</a-button
+                >
+                <a-button
+                  type="primary"
+                  style="margin: 4px 0"
+                  @click="customSysConfig(item)"
+                  :disabled="disableList.includes(item.sceneName)"
+                >
+                  一键配置</a-button
+                >
+              </div>
+            </div>
+          </div>
+        </a-col>
+      </a-row>
+    </a-row>
+  </div>
+  <div class="tigc-guidance-bottom">
+    <a-row :gutter="18">
+      <a-col :span="24" style="background-color: #fff; margin-top: 5px">
+        <div class="n-card-header">
+          <div class="n-card-header__main">
+            <div
+              style="
+                height: 32px;
+                width: 32px;
+                border: 1px solid rgb(70, 143, 246);
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+              "
+            >
+              <a-icon
+                type="history"
+                style="color: rgb(86, 141, 243); font-size: 18px"
+              />
+            </div>
+            <div style="margin-left: 8px">修改记录</div>
+          </div>
+          <div class="n-card-header__extra">
+            <a class="text-primary" @click="refreshEditStateList">刷新记录</a>
+          </div>
+        </div>
+        <a-list
+          item-layout="horizontal"
+          :data-source="guidanceSetList"
+        >
+          <a-list-item slot="renderItem" slot-scope="item, index">
+            <a-list-item-meta>
+              <span slot="description">
+                修改人:
+                <a-tag color="blue">{{item.docName}}</a-tag>修改时间：<a-tag
+                  color="pink"
+                  >{{item.hisCreateTime}}
+                </a-tag>
+                修改内容：<a-tag color="purple">{{item.updateRecord}}</a-tag>
+              </span>
+              <a slot="title" href="javascript:;">{{ item.sceneName }}</a>
+              <a-avatar slot="avatar" :src="require('@/assets/test.png')" />
+            </a-list-item-meta>
+          </a-list-item>
+        </a-list>
+        <div style="text-align: right; padding: 10px">
+          <a-pagination
+            :show-total="total => `共 ${stateTotal} 条修改记录`"
+            show-quick-jumper
+            :default-current="defaultCurrent"
+            show-size-changer
+            :pageSizeOptions="pageSizeOptions"
+            :defaultPageSize="defaultPageSize"
+            :total="stateTotal"
+            @change="onStatePageChange"
+            @showSizeChange="onShowSizeChange"
+          />
+        </div>
+      </a-col>
+    </a-row>
+  </div>
+
+  <div class="dialog" ref="dialogRef">
+    <a-modal
+      :title="guidanceTitle"
+      :visible="isVisible"
+      :footer="null"
+      :maskClosable="false"
+      @cancel="handleCancel"
+      width="50%"
+      style="position: relative"
+    >
+      <div style="padding: 12px">
+        <a-steps :current="current">
+          <a-step v-for="item in steps" :key="item.title" :title="item.title" />
+        </a-steps>
+        <div
+          class="steps-content"
+          style="
+            margin-top: 16px;
+            background-color: #fafafa;
+            height: 420px;
+            overflow-y: auto;
+            padding-top: 10px;
+          "
+        >
+          <div>
+            <h3>{{listData[current].title}}</h3>
+            <p>{{listData[current].content}}</p>
+            <h3>注意事项:</h3>
+            <p v-html="listData[current].careFor"></p>
+            <h3>
+              <a-button
+                type="primary"
+                icon="rise"
+                @click="toJump(listData[current].title,listData[current].url)"
+              >
+                功能跳转
+              </a-button>
+            </h3>
+          </div>
+        </div>
+        <div class="steps-action" style="margin-top: 20px">
+          <a-button
+            :disabled="current == 0"
+            style="margin-right: 12px"
+            @click="prev"
+          >
+            上一步
+          </a-button>
+          <a-button
+            v-if="current < steps.length - 1"
+            type="primary"
+            @click="next"
+          >
+            下一步
+          </a-button>
+          <a-button
+            v-else
+            :disabled="current === steps.length - 1"
+            type="primary"
+          >
+            下一步
+          </a-button>
+        </div>
+      </div>
+    </a-modal>
+
+    <!-- 医院信息修改 -->
+    <a-modal
+      :title="title"
+      :visible.sync="open"
+      centered
+      width="500px"
+      :destroyOnClose="true"
+      @cancel="infoCancel"
+    >
+      <a-form-model
+        ref="formRef"
+        :model="formModify"
+        :rules="rules"
+        :label-col="{ span: 6 }"
+        :wrapperCol="{ span: 14 }"
+      >
+        <a-form-model-item label="配置编码" prop="configCode">
+          <a-input
+            v-model="formModify.configCode"
+            placeholder="请输入配置编码"
+          />
+        </a-form-model-item>
+        <a-form-model-item label="配置值" prop="configValue">
+          <a-input
+            v-model="formModify.configValue"
+            placeholder="请输入配置值"
+          />
+        </a-form-model-item>
+        <a-form-model-item label="点我查看配置说明" prop="memo">
+          <a-textarea
+            v-model="formModify.memo"
+            placeholder="请输入配置说明"
+            allow-clear
+            style="height: 100px"
+          />
+        </a-form-model-item>
+        <a-form-model-item label="状态" prop="configStatus">
+          <a-radio-group v-model="formModify.configStatus">
+            <a-radio value="1"> 启用 </a-radio>
+            <a-radio value="0"> 停用 </a-radio>
+          </a-radio-group>
+        </a-form-model-item>
+        <a-form-model-item label="排序号">
+          <a-input
+            type="number"
+            v-model="formModify.configSort"
+            placeholder="请输入"
+          />
+        </a-form-model-item>
+      </a-form-model>
+      <div slot="footer" class="dialog-footer">
+        <a-button type="primary" @click="submitForm">确 定</a-button>
+        <a-button @click="infoCancel">取 消</a-button>
+      </div>
+    </a-modal>
+
+    <!-- 系统配置列表 -->
+    <a-modal
+      :title="sysTitle"
+      :visible="isSysVisable"
+      :footer="null"
+      :maskClosable="false"
+      @cancel="SysVisableCancel"
+      width="60%"
+      style="z-index: 99"
+    >
+      <a-checkbox-group
+        v-model="checkboxValue"
+        @change="onChange"
+        style="width: 100%"
+      >
+        <a-row :gutter="20" type="flex" justify="center">
+          <a-col
+            :span="11"
+            v-for="(item, index) in optionsList"
+            :key="index"
+            style="padding: 10px"
+          >
+            <div
+              style="border-radius: 10px; height: 360px; overflow-y: auto"
+              :style="{border: checkboxValue[0] === item.planName?'1px solid #1890ff':'1px solid rgb(239, 239, 245)'}"
+            >
+              <a-checkbox
+                :value="item.planName"
+                style="
+                  width: 90%;
+                  padding: 12px;
+                  margin: 1%;
+                  box-sizing: border-box;
+                "
+              >
+                <span style="font-size: 18px; font-weight: 600"
+                  >{{item.planName}}</span
+                >
+                <a-form-model>
+                  <div
+                    style="
+                      font-weight: 500;
+                      color: rgb(31, 34, 37);
+                      border-bottom: 1px solid rgb(239, 239, 245);
+                      margin-top: 10px;
+                      font-size: 16px;
+                    "
+                  >
+                    方案描述：
+                  </div>
+                  <div
+                    style="
+                      color: rgb(31, 34, 37);
+                      font-weight: 500;
+                      line-height: 2;
+                    "
+                  >
+                    {{ item.desc }}
+                  </div>
+                  <div
+                    style="
+                      font-weight: 500;
+                      color: rgb(31, 34, 37);
+                      border-bottom: 1px solid rgb(239, 239, 245);
+                      display: flex;
+                      align-items: center;
+                      margin-top: 10px;
+                      font-size: 16px;
+                    "
+                  >
+                    <div>方案配置：</div>
+                  </div>
+                  <a-form-model-item
+                    v-for="(itemArr, index) in item.configs"
+                    :key="index"
+                    :label="itemArr.configDetail"
+                    style="margin: 0"
+                  >
+                    <!-- <div v-if="itemArr.configCode === 'auto_triage_time'" style="display:flex;justify-content: space-between;align-items: center;">
+                      <a-input v-model.number="itemArr.configValue" />
+                      <span style="color: red;white-space: nowrap;margin-left: 12px;font-size: 12px;">只允许输入数字</span>
+                    </div> -->
+                    <div
+                      v-if="itemArr.configCode === 'register_effective'"
+                      style="
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                      "
+                    >
+                      <a-input v-model.number="itemArr.configValue" />
+                      <span
+                        style="
+                          color: red;
+                          white-space: nowrap;
+                          margin-left: 12px;
+                          font-size: 12px;
+                        "
+                        >只允许输入数字</span
+                      >
+                    </div>
+                    <a-textarea v-else v-model="itemArr.memo" disabled />
+                  </a-form-model-item>
+                </a-form-model>
+              </a-checkbox>
+            </div>
+          </a-col>
+        </a-row>
+        <div style="display: flex; justify-content: center">
+          <a-button type="primary" style="margin: 1% 2%" @click="onSumbit"
+            >确定</a-button
+          >
+          <a-button
+            type="default"
+            style="margin: 1% 2%"
+            @click="isSysVisable = false"
+            >关闭</a-button
+          >
+        </div>
+      </a-checkbox-group>
+    </a-modal>
+    <a-drawer
+      title="上线导引文档说明"
+      placement="right"
+      width="54%"
+      :closable="true"
+      destroyOnClose
+      :visible="visibleHelp"
+      @close="onCloseHelp"
+    >
+      <div class="content_contain">
+        <h3 style="color: #373a56; font-weight: 600">简介</h3>
+        <ol>
+          <li>
+            通过点击基础数据配置协助客服同事完善分诊上线基础配置，并且拥有一键跳转功能。
+          </li>
+          <li>
+            通过分诊方案配置直接选择符合医院情况的流程。
+            可以点击分诊方案设置配置<strong>自动分诊间隔时间[分钟]</strong>和<strong>挂号记录多长时间有效[天]</strong>。
+          </li>
+        </ol>
+        <p class="sf-el-image" style="text-align: center">
+          <el-image
+            style="width: 100%; height: auto"
+            :src="require('@/assets/help/sxdy_basic_data.png')"
+            :preview-src-list="[require('@/assets/help/sxdy_basic_data.png')]"
+          >
+          </el-image>
+          <span class="demonstration">图一</span>
+        </p>
+        <p class="sf-el-image" style="text-align: center">
+          <el-image
+            style="width: 100%; height: auto"
+            :src="require('@/assets/help/sxdy_hywh.png')"
+            :preview-src-list="[require('@/assets/help/sxdy_hywh.png')]"
+          >
+          </el-image>
+          <span class="demonstration">图二</span>
+        </p>
+      </div>
+    </a-drawer>
+  </div>
+</div>

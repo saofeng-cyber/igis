@@ -1,0 +1,17 @@
+<a-sub-menu :key="route.path" v-bind="$props" v-on="$listeners">
+  <span slot="title">
+    <i class="iconfont m-icon w-color" :class="route.icon"></i>
+    <span v-if="route.title">{{ route.title }}</span>
+  </span>
+  <template v-for="item in route.children">
+    <a-menu-item v-if="!item.children || item.children.length === 0" :key="item.path">
+      <ms-link :route="item">
+        <i class="iconfont m-icon w-color" :class="item.icon"></i>
+        <span v-if="item.title">
+          {{ route.title }}
+        </span>
+      </ms-link>
+    </a-menu-item>
+    <sub-menu v-else :key="item.path" :route="item"></sub-menu>
+  </template>
+</a-sub-menu>

@@ -1,0 +1,1000 @@
+<div class="msun-source__main">
+  <!-- 屏幕管理 页面 -->
+  <a-card :bordered="false" title="屏幕管理">
+    <span slot="extra">
+      <a-tooltip placement="left">
+        <template slot="title"> 点击查看屏幕管理操作说明 </template>
+        <a-icon
+          theme="filled"
+          type="question-circle"
+          @click="openHelpReadMe"
+          style="cursor: pointer; color: #3491fa; font-size: 16px"
+        />
+      </a-tooltip>
+    </span>
+    <div class="table-page-search-wrapper">
+      <a-form layout="inline" style="margin: 0">
+        <a-row type="flex" justify="start" aling="center">
+          <a-col>
+            <a-form-item label="屏幕名称">
+              <a-input
+                class="common-input"
+                @pressEnter="handleQuery"
+                v-model="queryParams.screenName"
+                placeholder="请输入"
+              ></a-input>
+            </a-form-item>
+          </a-col>
+          <a-col>
+            <a-form-item label="屏幕MAC">
+              <a-input
+                class="common-input"
+                @pressEnter="handleQuery"
+                v-model="queryParams.screenMac"
+                placeholder="请输入"
+              ></a-input>
+            </a-form-item>
+          </a-col>
+          <a-col>
+            <a-form-item label="屏幕IP">
+              <a-input
+                class="common-input"
+                @pressEnter="handleQuery"
+                v-model="queryParams.screenIp"
+                placeholder="请输入"
+              ></a-input>
+            </a-form-item>
+          </a-col>
+          <a-col>
+            <a-form-item label="诊区/工作站">
+              <a-select
+                show-search
+                option-filter-prop="children"
+                v-model="queryParams.screenCategory"
+                placeholder="请选择"
+                style="width: 200px"
+              >
+                <a-select-option
+                  v-for="item in screenCategoryDrop"
+                  :key="item.key"
+                >
+                  {{item.value}}
+                </a-select-option>
+              </a-select>
+            </a-form-item>
+          </a-col>
+          <a-col>
+            <a-form-item label="屏幕类型">
+              <a-select
+                show-search
+                option-filter-prop="children"
+                v-model="queryParams.screenType"
+                placeholder="请选择"
+                style="width: 200px"
+              >
+                <a-select-option v-for="item in screenTypeDrop" :key="item.key">
+                  {{item.value}}
+                </a-select-option>
+              </a-select>
+            </a-form-item>
+          </a-col>
+          <a-col>
+            <a-form-item>
+              <a-button type="primary" icon="search" @click="handleQuery"
+                >查询</a-button
+              >
+              <a-button
+                type="danger"
+                icon="reload"
+                class="head-reset"
+                @click="resetQuery"
+                >重置</a-button
+              >
+              <a-button
+                type="primary"
+                icon="plus"
+                class="head-add_equipment"
+                @click="openAddModal"
+                >新增</a-button
+              >
+              <!-- <a-button icon="bg-colors" class="head-style_equipment" @click="screenStyleOpen">屏幕样式</a-button> -->
+              <!-- 需要加一个action -->
+              <!-- <a-upload :customRequest="uploadExcel" name="file" :multiple="false" :headers="headers"
+                accept=".xlsx,.xls">
+                <a-button> <a-icon type="upload" />导入</a-button>
+              </a-upload> -->
+            </a-form-item>
+          </a-col>
+        </a-row>
+      </a-form>
+    </div>
+    <a-table
+      ref="table"
+      class="content-table"
+      size="middle"
+      :columns="columns"
+      :data-source="screenList"
+      :loading="loading"
+      :pagination="false"
+      :row-key="(record)=>record.screenId"
+      style="margin-top: 12px"
+    >
+      <span slot="screenCategory" slot-scope="text, record">
+        <template v-if="record.screenCategory == 1">
+          <a-tag color="#2db7f5"> 诊区 </a-tag>
+        </template>
+        <template v-if="record.screenCategory == 2">
+          <a-tag color="#87d068"> 工作站 </a-tag>
+        </template>
+      </span>
+
+      <span slot="screenType" slot-scope="text, record">
+        <template v-if="record.screenType == 1">
+          <a-tag color="cyan"> 安卓屏 </a-tag>
+        </template>
+        <template v-if="record.screenType == 2">
+          <a-tag color="purple"> Windows屏 </a-tag>
+        </template>
+      </span>
+
+      <span slot="communicationMode" slot-scope="text, record">
+        <template v-if="record.communicationMode === 1">
+          <a-tag color="purple"> websocket叫号方式 </a-tag>
+        </template>
+        <template v-if="record.communicationMode === 0">
+          <a-tag color="cyan"> 前置机叫号方式【禁止选择】 </a-tag>
+        </template>
+      </span>
+
+      <span slot="screenIpRender" slot-scope="text, record">
+        <template v-if="record.screenIp != ''">
+          <a-tag color="pink" style="font-size: 17px">
+            {{record.screenIp}}
+          </a-tag>
+        </template>
+        <template v-else>
+          <a-tag color="red"> -- </a-tag>
+        </template>
+      </span>
+
+      <span slot="screenMacRender" slot-scope="text, record">
+        <template v-if="record.screenMac != ''">
+          <a-tag color="geekblue" style="font-size: 17px">
+            {{record.screenMac}}
+          </a-tag>
+        </template>
+        <template v-else>
+          <a-tag color="red"> -- </a-tag>
+        </template>
+      </span>
+
+      <span slot="logoUrl" slot-scope="text, record">
+        <template>
+          <img
+            class="logo-img"
+            v-if="record.logoUrl"
+            :src="record.logoUrl"
+            style="width: 50px; height: 50px"
+          />
+        </template>
+      </span>
+
+      <span slot="action" slot-scope="text, record">
+        <a-button
+          type="link"
+          ghost
+          @click="handleUpdate(record)"
+          style="color: #1890ff"
+          >编辑</a-button
+        >
+        <a-popconfirm
+          placement="topLeft"
+          ok-text="确定"
+          cancel-text="取消"
+          @confirm="handleUpdataFlag(record)"
+        >
+          <template slot="title">
+            <p>确定删除吗</p>
+          </template>
+          <a-button type="link" style="color: red" ghost color="#2db7f5"
+            >删除</a-button
+          >
+        </a-popconfirm>
+      </span>
+    </a-table>
+    <a-pagination
+      v-model="queryParams.pageNum"
+      :total="total"
+      show-size-changer
+      :pageSize.sync="queryParams.pageSize"
+      @showSizeChange="queryList"
+      @change="queryList"
+      :show-total="total => `共${total}条` "
+      style="margin-top: 16px"
+    >
+    </a-pagination>
+  </a-card>
+
+  <!-- 屏幕 新增-修改 -->
+  <a-drawer
+    :title="title"
+    :visible.sync="open"
+    centered
+    width="800px"
+    @close="closeScreenModal"
+    :destroyOnClose="true"
+  >
+    <a-form-model
+      ref="formRef"
+      :model="formModify"
+      :rules="rules"
+      style="margin-bottom: 64px"
+    >
+      <a-collapse v-model="activeKey">
+        <template #expandIcon="props">
+          <a-icon type="caret-right" :rotate="props.isActive ? 90 : 0" />
+        </template>
+        <a-collapse-panel key="1" :showArrow="false">
+          <template slot="extra">
+            <div class="attension">
+              注意：带<span style="color: red; font-size: 18px">*</span
+              >号的为必输入项
+            </div>
+          </template>
+          <template slot="header">
+            <span
+              style="font-size: 15px; font-weight: bold; color: rgb(86, 81, 81)"
+              ><a-icon
+                type="info-circle"
+                theme="filled"
+                style="margin-right: 8px"
+              />屏幕信息</span
+            >
+          </template>
+          <a-row>
+            <a-col :span="12">
+              <a-form-model-item
+                label="屏幕名称"
+                prop="screenName"
+                :label-col="{ span: 8 }"
+                :wrapperCol="{ span: 12 }"
+              >
+                <a-input v-model="formModify.screenName" placeholder="请输入" />
+              </a-form-model-item>
+            </a-col>
+            <a-col :span="12">
+              <a-form-model-item
+                label="屏幕MAC"
+                :prop="isEdit ? '':'screenMac'"
+                :label-col="{ span: 8 }"
+                :wrapperCol="{ span: 12 }"
+              >
+                <a-input
+                  v-if="isEdit"
+                  v-model="formModify.screenMac"
+                  placeholder="请输入mac地址"
+                >
+                  <a-icon type="question-circle" theme="twoTone" />
+                  <a-tooltip
+                    slot="suffix"
+                    title="屏幕MAC值，请保持固定格式。例如：a1:b2:c3:e4:00:11"
+                  >
+                    <a-icon
+                      type="info-circle"
+                      style="color: rgba(0, 0, 0, 0.45)"
+                    />
+                  </a-tooltip>
+                </a-input>
+                <a-select
+                  v-else
+                  mode="combobox"
+                  show-search
+                  option-filter-prop="children"
+                  style="width: 100%"
+                  v-model="formModify.screenMac"
+                  @change="handleMacChange"
+                  :filterOption="cusFilterOption"
+                >
+                  <a-select-option
+                    v-for="(item, index) in macList"
+                    :key="index"
+                    :value="item.screenMac"
+                  >
+                    {{item.screenMac}}
+                  </a-select-option>
+                </a-select>
+              </a-form-model-item>
+            </a-col>
+          </a-row>
+          <a-row>
+            <a-col :span="12">
+              <a-form-model-item
+                label="屏幕类型"
+                prop="screenCategory"
+                :label-col="{ span: 8 }"
+                :wrapperCol="{ span: 12 }"
+              >
+                <a-select
+                  v-model="formModify.screenCategory"
+                  placeholder="请选择屏幕类型"
+                >
+                  <a-select-option :value="1"> 诊区 </a-select-option>
+                  <a-select-option :value="2"> 工作站 </a-select-option>
+                </a-select>
+              </a-form-model-item>
+            </a-col>
+            <a-col :span="12">
+              <a-form-model-item
+                label="系统类型"
+                prop="screenType"
+                :label-col="{ span: 8 }"
+                :wrapperCol="{ span: 16 }"
+              >
+                <a-select
+                  v-model="formModify.screenType"
+                  placeholder="请选择安卓屏/Windows屏系统"
+                >
+                  <a-select-option :value="1"> 安卓系统 </a-select-option>
+                  <a-select-option :value="2"> Windows系统 </a-select-option>
+                </a-select>
+              </a-form-model-item>
+            </a-col>
+          </a-row>
+          <a-row type="flex" align="middle">
+            <a-col :span="12" v-if="isEdit">
+              <a-form-model-item
+                label="屏幕IP"
+                prop="screenIp"
+                :label-col="{ span: 8 }"
+                :wrapperCol="{ span: 12 }"
+              >
+                <a-input
+                  v-model="formModify.screenIp"
+                  placeholder="请输入IP地址"
+                >
+                  <a-icon type="question-circle" theme="twoTone" />
+                  <a-tooltip
+                    slot="suffix"
+                    title="提示：屏幕IP值，不用专门维护数据。屏幕程序建立通讯后，会自动更新最新的IP地址。"
+                  >
+                    <a-icon
+                      type="info-circle"
+                      style="color: rgba(0, 0, 0, 0.45)"
+                    />
+                  </a-tooltip>
+                </a-input>
+              </a-form-model-item>
+            </a-col>
+            <a-col :span="12">
+              <a-form-model-item
+                label="屏幕样式"
+                :prop="isEdit ? '': 'screenStyleId'"
+                :label-col="{ span: 8 }"
+                :wrapperCol="{ span: 16 }"
+              >
+                <a-select
+                  v-model="formModify.screenStyleId"
+                  placeholder="请选择屏幕的样式"
+                  allowClear
+                >
+                  <a-select-option
+                    v-for="(item, index) in selectPlainOptions"
+                    :key="index"
+                    :value="item.screenStyleId"
+                  >
+                    {{ item.screenStyleName }}
+                  </a-select-option>
+                </a-select>
+              </a-form-model-item>
+            </a-col>
+            <a-col :span="12">
+              <a-form-model-item
+                label="叫号方式"
+                prop="communicationMode"
+                :label-col="{ span: 8 }"
+                :wrapperCol="{ span: 12 }"
+              >
+                <a-select
+                  v-model="formModify.communicationMode"
+                  placeholder="请选择屏幕的叫号方式"
+                  default-value="0"
+                >
+                  <a-select-option :value="1"> 默认叫号方式 </a-select-option>
+                  <a-select-option :value="0">
+                    前置机叫号方式【停用】
+                  </a-select-option>
+                </a-select>
+              </a-form-model-item>
+            </a-col>
+            <a-col :span="12">
+              <a-form-model-item
+                label="排序号"
+                :label-col="{ span: 8 }"
+                :wrapperCol="{ span: 12 }"
+              >
+                <a-input
+                  type="number"
+                  v-model="formModify.sortNo"
+                  placeholder="请输入"
+                />
+              </a-form-model-item>
+            </a-col>
+          </a-row>
+          <a-row>
+            <a-col :span="12">
+              <a-form-model-item
+                label="屏幕logo"
+                prop="logoUrl"
+                :label-col="{ span: 8 }"
+                :wrapperCol="{ span: 12 }"
+              >
+                <a-upload
+                  name="avatar"
+                  list-type="picture-card"
+                  class="avatar-uploader"
+                  :show-upload-list="false"
+                  :customRequest="uploadFiles"
+                >
+                  <img
+                    v-if="formModify.logoUrl"
+                    :src="formModify.logoUrl"
+                    alt="avatar"
+                    style="width: 104px; height: 104px"
+                  />
+                  <div v-else>
+                    <a-icon :type="uploadLoading ? 'loading' : 'plus'" />
+                    <div class="ant-upload-text">点击上传</div>
+                  </div>
+                </a-upload>
+              </a-form-model-item>
+            </a-col>
+            <a-col :span="12">
+              <a-form-model-item
+                label="屏幕宣教"
+                prop="missionaryText"
+                :label-col="{ span: 6 }"
+                :wrapperCol="{ span: 18 }"
+              >
+                <a-textarea
+                  v-model="formModify.missionaryText"
+                  :rows="4"
+                  placeholder="请输入"
+                  allow-clear
+                />
+              </a-form-model-item>
+            </a-col>
+          </a-row>
+          <!-- <a-row>
+            <a-col :span="24">
+              <a-form-model-item label="屏幕宣教" prop="missionaryText" :label-col="{ span: 4 }" :wrapperCol="{ span: 18 }">
+                <a-textarea v-model="formModify.missionaryText" placeholder="请输入" allow-clear style="max-height: 100px;" />
+              </a-form-model-item>
+            </a-col>
+          </a-row> -->
+        </a-collapse-panel>
+        <a-collapse-panel key="2" :showArrow="false">
+          <template slot="header">
+            <span
+              style="font-size: 15px; font-weight: bold; color: rgb(86, 81, 81)"
+              ><a-icon
+                type="setting"
+                theme="filled"
+                style="margin-right: 8px"
+              />配置信息</span
+            >
+          </template>
+          <a-col :span="12">
+            <a-form-model-item
+              label="屏幕叫号次数"
+              prop="callTimes"
+              :label-col="{ span: 12 }"
+              :wrapperCol="{ span: 12 }"
+            >
+              <a-select v-model="formModify.callTimes" placeholder="请选择">
+                <a-select-option :value="-1"> 未设置 </a-select-option>
+                <a-select-option :value="1"> 1次 </a-select-option>
+                <a-select-option :value="2"> 2次 </a-select-option>
+                <a-select-option :value="3"> 3次 </a-select-option>
+                <a-select-option :value="4"> 4次 </a-select-option>
+                <a-select-option :value="5"> 5次 </a-select-option>
+              </a-select>
+            </a-form-model-item>
+          </a-col>
+          <a-col :span="12" v-if="formModify.screenCategory === 1">
+            <div
+              style="
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+              "
+            >
+              <a-form-model-item
+                label="屏幕显示页数"
+                prop="callTimes"
+                :label-col="{ span: 12 }"
+                :wrapperCol="{ span: 11 }"
+                style="flex: 1"
+              >
+                <a-select
+                  v-model="formModify.screenShowPage"
+                  placeholder="请选择"
+                >
+                  <a-select-option :value="-1"> 未设置 </a-select-option>
+                  <a-select-option :value="1"> 第1页 </a-select-option>
+                  <a-select-option :value="2"> 第2页 </a-select-option>
+                  <a-select-option :value="3"> 第3页 </a-select-option>
+                  <a-select-option :value="4"> 第4页 </a-select-option>
+                  <a-select-option :value="5"> 第5页 </a-select-option>
+                </a-select>
+              </a-form-model-item>
+              <a-tooltip placement="topLeft">
+                <template slot="title">
+                  注：当前配置仅支持门诊大屏浅蓝色和门诊大屏竖屏，配置第几页就显示第几页的诊室
+                </template>
+                <a-icon
+                  type="info-circle"
+                  style="
+                    margin-bottom: 24px;
+                    cursor: pointer;
+                    font-size: 16px;
+                    color: #8d8d93;
+                  "
+                />
+              </a-tooltip>
+            </div>
+          </a-col>
+          <a-col :span="12">
+            <a-form-model-item
+              label="患者姓名脱敏"
+              prop="nameAntianaphylaxis"
+              :label-col="{ span: 12 }"
+              :wrapperCol="{ span: 12 }"
+            >
+              <a-select
+                v-model="formModify.nameAntianaphylaxis"
+                placeholder="请选择"
+              >
+                <a-select-option value="1"> 脱敏 </a-select-option>
+                <a-select-option value="0"> 不脱敏 </a-select-option>
+              </a-select>
+            </a-form-model-item>
+          </a-col>
+          <a-col :span="12">
+            <a-form-model-item
+              label="叫号姓名脱敏"
+              prop="callAntianaphylaxis"
+              :label-col="{ span: 12 }"
+              :wrapperCol="{ span: 12 }"
+            >
+              <a-select
+                v-model="formModify.callAntianaphylaxis"
+                placeholder="请选择"
+              >
+                <a-select-option value="-1"> 未设置 </a-select-option>
+                <a-select-option value="1"> 脱敏 </a-select-option>
+                <a-select-option value="0"> 不脱敏 </a-select-option>
+              </a-select>
+            </a-form-model-item>
+          </a-col>
+          <a-col :span="12">
+            <div
+              style="
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+              "
+            >
+              <a-form-model-item
+                label="患者队列是否显示上午/下午"
+                prop="screenShowShift"
+                :label-col="{ span: 14 }"
+                :wrapperCol="{ span: 9 }"
+                style="flex: 1"
+              >
+                <a-select
+                  v-model="formModify.screenShowShift"
+                  placeholder="请选择"
+                >
+                  <a-select-option value="0"> 不显示 </a-select-option>
+                  <a-select-option value="1"> 显示 </a-select-option>
+                </a-select>
+              </a-form-model-item>
+              <a-tooltip placement="topLeft">
+                <template slot="title">
+                  注：当前配置仅支持门诊大屏浅蓝色
+                </template>
+                <a-icon
+                  type="info-circle"
+                  style="
+                    margin-bottom: 24px;
+                    cursor: pointer;
+                    font-size: 16px;
+                    color: #8d8d93;
+                  "
+                />
+              </a-tooltip>
+            </div>
+          </a-col>
+          <a-col :span="12">
+            <div
+              style="
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+              "
+            >
+              <a-form-model-item
+                label="是否显示无队列诊室"
+                prop="roomQueue"
+                :label-col="{ span: 14 }"
+                :wrapperCol="{ span: 9 }"
+                style="flex: 1"
+              >
+                <a-select v-model="formModify.roomQueue" placeholder="请选择">
+                  <a-select-option :value="1"> 不显示 </a-select-option>
+                  <a-select-option :value="0"> 显示 </a-select-option>
+                </a-select>
+              </a-form-model-item>
+              <a-tooltip placement="topLeft">
+                <template slot="title"> 注：当前配置不支持检验科大屏 </template>
+                <a-icon
+                  type="info-circle"
+                  style="
+                    margin-bottom: 24px;
+                    cursor: pointer;
+                    font-size: 16px;
+                    color: #8d8d93;
+                  "
+                />
+              </a-tooltip>
+            </div>
+          </a-col>
+          <a-col :span="12">
+            <div
+              style="
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+              "
+            >
+              <a-form-model-item
+                label="是否显示无队列医生"
+                prop="docQueue"
+                :label-col="{ span: 14 }"
+                :wrapperCol="{ span: 9 }"
+                style="flex: 1"
+              >
+                <a-select v-model="formModify.docQueue" placeholder="请选择">
+                  <a-select-option :value="1"> 显示 </a-select-option>
+                  <a-select-option :value="0"> 不显示 </a-select-option>
+                </a-select>
+              </a-form-model-item>
+              <a-tooltip placement="topLeft">
+                <template slot="title"> 注：当前配置不支持检验科大屏 </template>
+                <a-icon
+                  type="info-circle"
+                  style="
+                    margin-bottom: 24px;
+                    cursor: pointer;
+                    font-size: 16px;
+                    color: #8d8d93;
+                  "
+                />
+              </a-tooltip>
+            </div>
+          </a-col>
+          <a-col :span="12" v-if="formModify.screenCategory === 1">
+            <div
+              style="
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+              "
+            >
+              <a-form-model-item
+                label="大屏是否滚动"
+                prop="isScreenScroll"
+                :label-col="{ span: 12 }"
+                :wrapperCol="{ span: 11 }"
+                style="flex: 1"
+              >
+                <a-select
+                  v-model="formModify.isScreenScroll"
+                  placeholder="请选择"
+                >
+                  <a-select-option value="1"> 是 </a-select-option>
+                  <a-select-option value="0"> 否 </a-select-option>
+                </a-select>
+              </a-form-model-item>
+              <a-tooltip placement="topLeft">
+                <template slot="title">
+                  注：当前配置仅支持门诊竖屏滚动，PACS大屏滚动以及LIS大屏
+                </template>
+                <a-icon
+                  type="info-circle"
+                  style="
+                    margin-bottom: 24px;
+                    cursor: pointer;
+                    font-size: 16px;
+                    color: #8d8d93;
+                  "
+                />
+              </a-tooltip>
+            </div>
+          </a-col>
+          <a-col :span="12" v-if="formModify.screenCategory === 1">
+            <div
+              style="
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+              "
+            >
+              <a-form-model-item
+                label="是否显示排队序号"
+                prop="isScreenScroll"
+                :label-col="{ span: 12 }"
+                :wrapperCol="{ span: 11 }"
+                style="flex: 1"
+              >
+                <a-select
+                  v-model="formModify.screenShowNumber"
+                  placeholder="请选择"
+                >
+                  <a-select-option value="-1"> 未配置 </a-select-option>
+                  <a-select-option value="1"> 是 </a-select-option>
+                  <a-select-option value="0"> 否 </a-select-option>
+                </a-select>
+              </a-form-model-item>
+              <a-tooltip placement="topLeft">
+                <template slot="title"> 注：当前配置仅支持PACS大屏 </template>
+                <a-icon
+                  type="info-circle"
+                  style="
+                    margin-bottom: 24px;
+                    cursor: pointer;
+                    font-size: 16px;
+                    color: #8d8d93;
+                  "
+                />
+              </a-tooltip>
+            </div>
+          </a-col>
+        </a-collapse-panel>
+      </a-collapse>
+    </a-form-model>
+    <div
+      :style="{
+      position: 'absolute',
+      bottom: 0,
+      width: '100%',
+      borderTop: '1px solid #e8e8e8',
+      padding: '10px 16px',
+      textAlign: 'center',
+      left: 0,
+      background: '#fff',
+      borderRadius: '0 0 4px 4px',
+    }"
+    >
+      <a-button
+        size="large"
+        type="primary"
+        :loading="loadingSubmit"
+        @click="submitForm"
+        style="margin-right: 16px"
+        >提 交</a-button
+      >
+      <a-button size="large" @click="cancel" style="margin-left: 16px"
+        >取 消</a-button
+      >
+    </div>
+  </a-drawer>
+
+  <!-- 屏幕样式管理弹窗 -->
+  <a-modal
+    title="屏幕样式管理"
+    :visible.sync="styleOpen"
+    @cancel="closeStyle"
+    :footer="null"
+    centered
+    width="800px"
+  >
+    <!-- <a-divider style="margin: 0 0 0 0;">
+      门诊大屏
+    </a-divider> -->
+    <a-radio-group v-model="value1" class="mzradio">
+      <a-radio-button
+        v-for="(item, index) in plainOptions"
+        :key="index"
+        :value="item.screenStyleId"
+        @click="screenEdit(item)"
+        style="margin: 12px"
+      >
+        {{ item.screenStyleName }}
+      </a-radio-button>
+      <!-- <el-button type="primary" @click="addScreenStyle" size="small">
+        点我添加屏幕样式
+      </el-button> -->
+    </a-radio-group>
+  </a-modal>
+
+  <a-drawer
+    :title="screenStyleTitle"
+    placement="right"
+    :closable="false"
+    :visible="screenVisible"
+    width="520"
+    closable
+    @close="onClose"
+  >
+    <el-form id="components-form-demo-validate-other" label-suffix="">
+      <el-form-item label="屏幕样式名称">
+        <el-input v-model="screenStyleName" disabled />
+      </el-form-item>
+      <el-form-item label="屏幕路由🔗">
+        <el-input v-model="screenStyleUrl" disabled />
+      </el-form-item>
+      <div style="display: flex; align-items: center; margin: 0 0 16px 0">
+        <span class="ant-form-text" style="margin-left: 0px; font-weight: bold">
+          样式管理
+        </span>
+        <!-- <span class="ant-form-text" style="margin-left: 80px;font-weight: bold;">
+          字体大小
+        </span> -->
+        <span
+          class="ant-form-text"
+          style="margin-left: 230px; font-weight: bold"
+        >
+          字体颜色
+        </span>
+      </div>
+      <el-form-item
+        v-for="(item, index) in styleList"
+        :key="index"
+        :label="item.label"
+        style="display: flex; align-items: center"
+      >
+        <div style="display: flex; align-items: center">
+          <!-- <el-radio-group v-model="item.size" size="small" style="margin-left: 40px;">
+            <el-radio-button label="18">
+              大
+            </el-radio-button>
+            <el-radio-button label="16">
+              中
+            </el-radio-button>
+            <el-radio-button label="14">
+              小
+            </el-radio-button>
+          </el-radio-group> -->
+          <el-color-picker
+            v-model="item.color"
+            size="small"
+            style="margin-left: 230px"
+          />
+        </div>
+      </el-form-item>
+      <el-form-item style="text-align: center">
+        <el-button
+          type="success"
+          size="medium"
+          style="width: 120px"
+          @click="screenSubmitForm"
+        >
+          提交
+        </el-button>
+      </el-form-item>
+    </el-form>
+  </a-drawer>
+
+  <a-drawer
+    title="屏幕管理文档说明"
+    placement="right"
+    width="54%"
+    height="100%"
+    destroyOnClose
+    :closable="true"
+    :visible="visibleHelp"
+    @close="onCloseHelp"
+  >
+    <div class="content_contain">
+      <h3>简介</h3>
+      <p>
+        屏幕管理即为现场叫号设备通过维护<strong>mac地址、系统类型和叫号方式</strong>等信息与系统绑定。
+      </p>
+      <p class="p_common">功能说明</p>
+      <ul>
+        <li>
+          <strong>屏幕名称：</strong>
+          屏幕名称要通俗易懂（例如：内科诊区大屏，心内科诊室小屏等）
+        </li>
+        <li>
+          <strong>屏幕MAC，屏幕IP：</strong>
+          屏幕mac和屏幕ip是屏幕管理最重要的内容，<strong
+            >mac和ip需要从医院屏幕上找到对应的信息</strong
+          >
+        </li>
+        <li style="color: red">
+          <strong>诊区大屏则选择诊区，诊室小屏则选择工作站</strong>
+        </li>
+        <li>
+          <strong>系统类型：</strong>
+          系统类型根据现场屏幕进行选择（目前安卓和windows都支持）
+        </li>
+        <li>
+          <strong>叫号方式：</strong> 新建屏幕时，叫号方式全都选择<strong
+            >websocket叫号方式</strong
+          >
+        </li>
+        <li>
+          <strong>新增屏幕：</strong>
+          在屏幕管理页面新增后，进入新增屏幕界面，这里需要输入屏幕MAC（屏幕电视上找）,根据这个屏幕是诊区使用还是工作站使用来选择诊区/工作站，其他根据情况填写
+        </li>
+        <li><strong>屏幕页面的查询删除编辑功能</strong></li>
+        <p class="sf-el-image" style="text-align: center">
+          <el-image
+            style="width: 100%; height: auto"
+            :src="require('@/assets/help/screen_manage.png')"
+            :preview-src-list="[require('@/assets/help/screen_manage.png')]"
+          >
+          </el-image>
+        </p>
+
+        <li>
+          <strong>屏幕LOGO：</strong> 修改屏幕logo，屏幕对应位置图片对应改变
+        </li>
+        <li>
+          <strong>屏幕样式：</strong>
+          屏幕在屏幕样式中进行特殊化修改后，可以将每个屏幕选择屏幕样式
+        </li>
+        <li>
+          <strong>是否显示无队列医生：</strong>
+          <ul>
+            <li>显示：只要医生在线就会显示在屏幕上</li>
+            <li>不显示：没有队列的医生不显示在屏幕上</li>
+          </ul>
+        </li>
+        <li>
+          <strong>是否选择无队列诊室：</strong>
+          <ul>
+            <li>显示：所有的诊室都显示</li>
+            <li>不显示：没有队列的诊室不显示</li>
+          </ul>
+        </li>
+        <li>
+          <strong>屏幕叫号次数：</strong
+          >若屏幕叫号次数为3，则点击一次叫号，屏幕上叫号三次
+        </li>
+        <li>
+          <strong>屏幕显示页数：</strong
+          >此配置主要是配合门诊竖屏使用，其他屏幕默认选中未设置
+          <ul>
+            <li>配置为：未设置。则当前屏幕展示信息为轮番展示</li>
+            <li>配置为：第一页。当前屏幕仅展示第一页数据</li>
+          </ul>
+        </li>
+        <li>
+          <strong>屏幕队列是否脱敏：</strong>
+          <ul>
+            <li>配置：未脱敏，则屏幕队列患者姓名不脱敏显示</li>
+            <li>配置为：脱敏，则屏幕队列患者姓名脱敏显示</li>
+          </ul>
+        </li>
+        <li>
+          <strong>屏幕叫号是否脱敏：</strong>
+          <ul>
+            <li>配置：未脱敏，则屏幕叫号信息患者姓名不脱敏显示</li>
+            <li>配置为：脱敏，则屏幕叫号信息患者姓名脱敏显示</li>
+          </ul>
+        </li>
+        <p class="sf-el-image" style="text-align: center">
+          <el-image
+            style="width: 100%; height: auto"
+            :src="require('@/assets/help/screen_manage_admin.png')"
+            :preview-src-list="[require('@/assets/help/screen_manage_admin.png')]"
+          >
+          </el-image>
+        </p>
+      </ul>
+    </div>
+  </a-drawer>
+</div>

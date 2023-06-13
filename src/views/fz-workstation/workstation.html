@@ -1,0 +1,230 @@
+<div class="msun-source__main">
+  <!-- 工作站 页面 -->
+  <a-card title="工作站" :bordered="false">
+    <span slot="extra">
+      <a-tooltip placement="left">
+        <template slot="title">
+          点击查看工作站管理操作说明
+        </template>
+        <a-icon theme="filled" type="question-circle" @click="openHelpReadMe" style="cursor: pointer;color: #3491FA;font-size: 16px;" />
+      </a-tooltip>
+    </span>
+    <div class="table-page-search-wrapper">
+      <a-form layout="inline" style="margin:0">
+        <a-form-item label="工作站名称">
+          <a-input class="common-input" @pressEnter="handleQuery" v-model="queryParams.workstationName" placeholder="请输入"></a-input>
+        </a-form-item>
+        <a-form-item label="所属诊区名称">
+          <a-select v-model="queryParams.clinicAreaId" placeholder="请选择" style="width: 120px" @change="handleProvinceChange()">
+            <a-select-option v-for="item in clinicAreaList" :key="item.clinicAreaId">
+              {{ item.clinicAreaName }}
+            </a-select-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item label="所属诊室">
+          <a-select v-model="queryParams.roomId" placeholder="请选择" :dropdownMatchSelectWidth="false" style="width: 120px">
+            <a-select-option v-for="item in roomList" :key="`${item.roomId}`">
+              {{item.roomName}}
+            </a-select-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item label="屏幕名称">
+          <a-input
+            class="common-input"
+            @pressEnter="handleQuery"
+            v-model="queryParams.screenName"
+            placeholder="请输入"
+          ></a-input>
+        </a-form-item>
+        <a-form-item label="机器码" prop="workstationMachineCode">
+          <a-input v-model.trim="queryParams.workstationMachineCode" @pressEnter="handleQuery" placeholder="请输入" />
+        </a-form-item>
+        <a-form-item>
+          <a-button style="background-color: #e66c3c;color: #fff;line-height: 25px;" :loading="getMachineLoading" @click="getWorkstationMachineCode">获取机器码</a-button>
+        </a-form-item>
+        <a-form-item>
+          <a-button type="primary" icon="search" @click="handleQuery">查询</a-button>
+        </a-form-item>
+        <a-form-item>
+          <a-button type="danger" icon="reload" class="head-reset" @click="resetQuery">重置</a-button>
+        </a-form-item>
+        <a-form-item>
+          <a-button type="primary" icon="plus" class="head-add_equipment" @click="openAddModal">新增</a-button>
+        </a-form-item>
+        <!-- <a-form-item>
+          <a-upload :customRequest="uploadExcel" name="file" :multiple="false" :headers="headers" accept=".xlsx,.xls">
+            <a-button> <a-icon type="upload" />导入</a-button>
+          </a-upload>
+        </a-form-item> -->
+      </a-form>
+    </div>
+  </a-card>
+  <a-card>
+    <a-table ref="table" class="content-table" size="middle" :columns="columns" :data-source="workstationList" :loading="loading" :pagination="false" :row-key="(record)=>record.workstationId">
+      <span slot="docNameRender" slot-scope="text, record">
+        <template v-if="text">
+          <span>{{ text }}</span>
+        </template>
+        <template v-else>
+          <a-tag color="purple">医生未登录</a-tag>
+        </template>
+        <a-popconfirm title="确定下线该医生吗?" ok-text="确定" cancel-text="取消" @confirm="confirmDoc(record)" @cancel="cancelPop">
+          <a-button v-if="text" type="link" style="color:red">下线</a-button>
+        </a-popconfirm>
+      </span>
+
+      <span slot="action" slot-scope="text, record">
+        <a-button type="link" color="#2db7f5" @click="handleUpdate(record)">编辑</a-button>
+        <a-popconfirm title="确定删除该工作站吗?" ok-text="确定" cancel-text="取消" @confirm="confirm(record)" @cancel="cancelPop">
+          <a-button type="link" style="color:red">删除</a-button>
+        </a-popconfirm>
+      </span>
+
+      <span slot="screenName" slot-scope="text, record">
+        <template v-for="item in record.fzScreenVOS">
+          <div>
+            {{ item.screenName }}
+          </div>
+        </template>
+      </span>
+    </a-table>
+    <br />
+    <a-pagination v-model="queryParams.pageNum" :total="total" show-size-changer :pageSize.sync="queryParams.pageSize" @showSizeChange="showSizeChange" @change="queryList" :show-total="total => `共${total}条` "> </a-pagination>
+  </a-card>
+
+  <!-- 工作站 新增-修改 -->
+  <a-modal :title="title" :visible.sync="open" width="800px" @cancel="cancel">
+    <a-form-model ref="formRef" :model="formModify" :rules="rules">
+      <a-row>
+        <a-col :span="12">
+          <a-form-model-item label="工作站名称" prop="workstationName" :label-col="{ span: 10 }" :wrapperCol="{ span: 12 }">
+            <a-input v-model="formModify.workstationName" placeholder="请输入" style="width: 200px;" />
+          </a-form-model-item>
+        </a-col>
+        <a-col :span="12">
+          <a-form-model-item label="场景类型" prop="sceneTypeStr" :label-col="{ span: 8 }" :wrapperCol="{ span: 12 }">
+            <a-select show-search option-filter-prop="children" @change="querySceneSubtype(formModify)" v-model="formModify.sceneTypeStr" placeholder="请选择" style="width: 200px;">
+              <a-select-option v-for="item in sceneTypeList" :key="`${item.dictName}|${item.dictCode}`">
+                {{item.dictName}}
+              </a-select-option>
+            </a-select>
+          </a-form-model-item>
+        </a-col>
+      </a-row>
+      <a-row>
+        <a-col :span="12">
+          <a-form-model-item label="场景子类型" prop="subTypeStr" :label-col="{ span: 10 }" :wrapperCol="{ span: 12 }">
+            <a-select show-search option-filter-prop="children" v-model="formModify.subTypeStr" placeholder="请选择" style="width: 200px;">
+              <a-select-option v-for="item in sceneSubtypeList" :key="`${item.subtypeCode}|${item.subtypeName}`">
+                {{item.subtypeName}}
+              </a-select-option>
+            </a-select>
+          </a-form-model-item>
+        </a-col>
+        <a-col :span="12">
+          <a-form-model-item label="所属诊室" prop="roomStr" :label-col="{ span: 8 }" :wrapperCol="{ span: 12 }">
+            <a-select show-search allowClear option-filter-prop="children" v-model="formModify.roomStr" placeholder="请选择" style="width: 200px;">
+              <a-select-option v-for="item in roomList" :key="`${item.roomId}|${item.roomName}`">
+                {{item.roomName}}
+              </a-select-option>
+            </a-select>
+          </a-form-model-item>
+        </a-col>
+      </a-row>
+      <a-row>
+        <!-- <a-col :span="12">
+          <a-form-model-item label="工作站MAC" prop="workstationMac" :label-col="{ span: 10 }" :wrapperCol="{ span: 12 }">
+            <a-input v-model="formModify.workstationMac" placeholder="请输入" style="width: 200px;" />
+          </a-form-model-item>
+        </a-col> -->
+        <a-col :span="24">
+          <a-form-model-item label="绑定机器码" :label-col="{ span: 5 }" :wrapperCol="{ span: 14 }">
+            <a-input style="width:220px" type="text" disabled v-model="formModify.workstationMachineCode" />
+            <span v-if="isMsunBrowser === '0'">
+              <a-button :loading="machineLoading" @click="getMachineCode">点击绑定机器码</a-button>
+              <a-tooltip placement="top">
+                <template slot="title">
+                  <span>托盘方式获取</span>
+                </template>
+                <a-icon type="exclamation-circle" />
+              </a-tooltip>
+              <a-button @click="clearMachineCode">清空机器码</a-button>
+            </span>
+            <span v-if="isMsunBrowser === '1'">
+              <a-button :loading="machineLoading" @click="getMachineCode">点击绑定机器码</a-button>
+              <a-tooltip placement="top">
+                <template slot="title">
+                  <span>众阳浏览器获取</span>
+                </template>
+                <a-icon type="exclamation-circle" />
+              </a-tooltip>
+              <a-button @click="clearMachineCode">清空机器码</a-button>
+            </span>
+          </a-form-model-item>
+        </a-col>
+      </a-row>
+      <a-row>
+        <a-col :span="12">
+          <a-form-model-item label="屏幕名称/屏幕MAC" prop="screenIds" :label-col="{ span: 10 }" :wrapperCol="{ span: 12 }">
+            <a-select show-search option-filter-prop="children" mode="multiple" style="width: 200px;" placeholder="请选择" v-model="formModify.screenIds">
+              <a-select-option v-for="item in screenList" :key="item.screenId">
+                {{ item.screenName }}
+                <template>
+                  <a-row>
+                    <a-col> </a-col>
+                  </a-row>
+                  <a-row>
+                    <a-col>
+                      {{ item.screenMac }}
+                    </a-col>
+                  </a-row>
+                </template>
+              </a-select-option>
+            </a-select>
+          </a-form-model-item>
+        </a-col>
+        <a-col :span="12">
+          <a-form-model-item label="排序号" :label-col="{ span: 8 }" :wrapperCol="{ span: 12 }">
+            <a-input type="number" v-model="formModify.sortNo" placeholder="请输入" style="width: 200px;" />
+          </a-form-model-item>
+        </a-col>
+      </a-row>
+    </a-form-model>
+    <div slot="footer" class="dialog-footer">
+      <a-button type="primary" :loading="loadingSubmit" @click="submitForm">提 交</a-button>
+      <a-button @click="cancel">取 消</a-button>
+    </div>
+  </a-modal>
+  <a-drawer title="工作站管理文档说明" placement="right" width="54%" height="100%" destroyOnClose :closable="true" :visible="visibleHelp" @close="onCloseHelp">
+    <div class="content_contain">
+      <h3>简介</h3>
+      <p>一个工作站相当于一台电脑，有几台电脑创建几个工作站，额外注意场景类型和机器码的绑定。工作站需要展示在线医生：门诊、血透 不需要显示在线医生：药房、心电、pacs、lis、急诊。除了心电系统，都需要医生上线后进行下一步叫号等操作</p>
+      <p class="p_common">功能说明</p>
+      <ul>
+        <li><strong>工作站名称：</strong> 工作站名称要通俗易懂（例如：内科一诊室工作站一，内科一诊室工作站二）</li>
+        <li class="p_common"><strong>场景类型和场景子类型：</strong> 不同的工作站选择不同的场景（例如药房取药工作站，需要选择场景类型：药房，场景子类型：取药）</li>
+        <li><strong>场景类型和场景子类型（重要）：</strong> 不同的诊室选择不同的场景（例如医技心电诊室，需要选择场景类型：医技，场景子类型：心电）， <strong style="color: red;">若找不到想选择的场景，联系交付手册同事进行对应场景的开通</strong></li>
+        <li class="p_common">
+          <strong>机器码：</strong>
+          机器码（电脑唯一标识）是医生登录的重要依据，医生通过电脑登录系统后，会通过机器码同步登录到分诊系统，一个医生只能登录在一个工作站上，若同时在别的工作站登录会顶掉之前登录信息。
+        </li>
+        <li><strong>屏幕名称/屏幕MAC：</strong> 工作站屏幕为小屏，选择对应小屏维护。</li>
+        <li><strong>排序号：</strong> 工作站排序序号</li>
+        <p class="sf-el-image" style="text-align: left;">
+          <el-image style="width: 100%; height: auto" :src="require('@/assets/help/fz_workstation_edit.png')" :preview-src-list="previewSrcList"> </el-image>
+          <span class="demonstration">图一</span>
+        </p>
+        <li><strong>工作站页面的新增功能：</strong>在工作站页面新增，需要额外注意绑定机器码（通过众阳浏览器到科室电脑进行绑定）每个诊室拥有几台电脑就创建几个工作站。</li>
+        <p class="sf-el-image" style="text-align: center;">
+          <el-image style="width: 100%; height: auto" :src="require('@/assets/help/fz_workstation_add.png')" :preview-src-list="previewSrcList"> </el-image>
+          <span class="demonstration">图二</span>
+        </p>
+        <li><strong>工作站页面的查询删除编辑功能：</strong>删除诊室时，若诊室未pacs诊室，会优先判断是否已经在pacs系统绑定。若已绑定则提示【当前诊室已经绑定了PACS诊室 无法修改/删除诊室！】</li>
+        <p class="sf-el-image" style="text-align: center;">
+          <el-image style="width: 100%; height: auto" :src="require('@/assets/help/fz_workstation_form.png')" :preview-src-list="previewSrcList"> </el-image>
+          <span class="demonstration">图三</span>
+        </p>
+      </ul>
+    </div>
+  </a-drawer>
+</div>

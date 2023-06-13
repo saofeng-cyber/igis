@@ -1,0 +1,5 @@
+<a-select v-model="mValue" showSearch allowClear :filter-option="false" @search="mSearch" @change="mChange" @dropdownVisibleChange="mVisible">
+  <a-select-option v-for="item in mSource" :key="item.key" :value="item.key">
+    {{ item.value }}
+  </a-select-option>
+</a-select>

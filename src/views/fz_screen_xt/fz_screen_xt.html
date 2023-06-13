@@ -1,0 +1,124 @@
+<div class="fz_screen_xt">
+  <div class="fz_screen_xt_banner">
+    <div class="fz_screen_xt_header">
+      <div class="fz_screen_xt_header_hospital" @click="setting">
+        {{ clinicName }}
+      </div>
+      <div class="fz_screen_xt_header_time">
+        <span>{{dateTime.currentDate}}</span>
+        <span>{{dateTime.currentWeek}}</span>
+        <span>{{dateTime.currentTime}}</span>
+      </div>
+    </div>
+    <div v-show="isShow" class="fz_screen_xt_content">
+      <xt-card
+        ref="xtcard"
+        @getScreenInfo="getScreenInfo"
+        @stopTimer="stopTimer"
+        :macAddr="paramsMac.macAddr"
+        style="height: 100%;"
+      />
+    </div>
+    <div v-show="!isShow" class="fz_screen_xt_notification">
+      <h1>{{notification.title}}</h1>
+      <p>{{notification.content}}</p>
+    </div>
+    <div v-show="isShow" class="fz_screen_xt_bottom">
+      <div class="fz_screen_xt_bottom_missionaryText">
+        <div
+          style="flex: 1;text-align: center;overflow: hidden;white-space: nowrap;text-overflow: ellipsis;"
+        >
+          {{screenInfoData.missionaryText}}
+        </div>
+      </div>
+    </div>
+    <div v-if="infoOpen" class="information">
+      {{ information }}
+    </div>
+  </div>
+  <a-modal
+    title="请输入屏幕的信息"
+    :visible.sync="macOpen"
+    width="60%"
+    @cancel="cancel"
+    :maskClosable="false"
+  >
+    <a-form-model ref="formRef" :model="paramsMac" :rules="rules">
+      <a-row>
+        <a-col :span="12">
+          <a-form-model-item
+            label="屏幕MAC"
+            prop="macAddr"
+            :label-col="{ span: 10 }"
+            :wrapperCol="{ span: 12 }"
+          >
+            <a-input
+              v-model="paramsMac.macAddr"
+              placeholder="请输入"
+              style="width: 25vw"
+            />
+          </a-form-model-item>
+        </a-col>
+      </a-row>
+      <a-row>
+        <a-col :span="12">
+          <a-form-model-item
+            label="屏幕Token"
+            prop="screenToken"
+            :label-col="{ span: 10 }"
+            :wrapperCol="{ span: 12 }"
+          >
+            <a-input
+              v-model="paramsMac.screenToken"
+              placeholder="请输入"
+              style="width: 25vw"
+            />
+          </a-form-model-item>
+        </a-col>
+      </a-row>
+      <a-row>
+        <a-col :span="12">
+          <a-form-model-item
+            label="通讯域名"
+            prop="screenURL"
+            :label-col="{ span: 10 }"
+            :wrapperCol="{ span: 12 }"
+          >
+            <a-input
+              v-model="paramsMac.screenURL"
+              placeholder="请输入"
+              style="width: 25vw"
+            />
+          </a-form-model-item>
+        </a-col>
+      </a-row>
+      <a-row>
+        <a-col :span="12">
+          <a-form-model-item
+            label="WS请求头"
+            prop="wsUrl"
+            :label-col="{ span: 10 }"
+            :wrapperCol="{ span: 12 }"
+          >
+            <a-select
+              v-model="paramsMac.wsUrl"
+              placeholder="请选择websocket连接时的请求头"
+              default-value="wss://"
+            >
+              <a-select-option value="ws://">
+                ws://
+              </a-select-option>
+              <a-select-option value="wss://">
+                wss://
+              </a-select-option>
+            </a-select>
+          </a-form-model-item>
+        </a-col>
+      </a-row>
+    </a-form-model>
+    <div slot="footer" class="dialog-footer">
+      <a-button type="primary" @click="setMac">提 交</a-button>
+      <a-button @click="cancel">取 消</a-button>
+    </div>
+  </a-modal>
+</div>

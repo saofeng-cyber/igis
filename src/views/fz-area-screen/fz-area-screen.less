@@ -1,0 +1,185 @@
+.tigc_area_screen_hreader {
+  height: 10vh;
+  background-color: var(--tigc_area_screen_header);
+  border-radius: 0 0 10px 10px;
+  box-shadow: 1px 5px 10px 5px #40a9ff;
+  & /deep/ .el-card__body {
+    padding: 0 20px 0 20px;
+  }
+  margin-bottom: 2vh;
+}
+.fzwatting_container {
+  position: relative;
+  width: 100%;
+  height: 9vh;
+  white-space: nowrap;
+  overflow: hidden;
+  .fzwatting_content {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    display: inline-block;
+  }
+}
+
+.data_table {
+  border-radius: 10px 10px 10px 10px;
+  box-shadow: 1px 5px 10px 5px #40a9ff;
+  background-color: #a1defb;
+  overflow: hidden;
+  & /deep/ .el-card__body {
+    padding: 0;
+  }
+    .th-head {
+      background-color: #0ca2f9;
+      height: 9vh;
+      font-size: 4vh;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      border-bottom: 1px solid #e8e8e8;
+    }
+
+    .th-tbody {
+      height: 63vh;
+      font-size: 4vh;
+      color: #fff;
+      overflow: hidden;
+      .th-container {
+        height: auto;
+        overflow: hidden;
+      }
+
+      .th-content {
+        display: flex;
+        align-items: center;
+        text-align: center;
+        height: 9vh;
+        font-size: 4vh;
+        border-bottom: 1px solid #e8e8e8;
+        border-right: 1px solid #e8e8e8;
+        overflow: hidden;
+        .fzCallingQueueVOS {
+          color: green;
+          font-weight: bold;
+        }
+        .fzWattingQueueVOS {
+          color: rgba(0, 0, 0, 0.65);
+          font-weight: bold;
+        }
+        .fzOverQueueVOS {
+          color: red;
+          font-weight: bold;
+        }
+      }
+    }
+}
+.header {
+  height: 9vh;
+  display: flex;
+  align-items: center;
+}
+.header-img {
+  // width: 360px;
+  height: 10vh;
+  margin-top: 1vh;
+  img {
+    width: auto;
+    height: 100%;
+  }
+}
+.header-title {
+  text-align: center;
+  font-size: 5vh;
+  justify-content: center;
+  align-items: center;
+  color: var(--tigc_area_screen_clinicAreaName);
+}
+.header-right {
+  font-size: 3vh;
+  color: #1f6ca8;
+  text-align: right;
+  line-height: 8vh;
+}
+.hospital_logo {
+  height: 6vh;
+}
+.areaname_col {
+  justify-content: center;
+}
+.tigc_area_tigc_header_time {
+  display: flex;
+}
+.tigc_area_tigc_table {
+  height: 72vh;
+}
+.tigc-area-screen-a-card {
+  background-color: #a1defb;
+  padding: 10px;
+}
+.tigc-fz-area-screen-main {
+  background-color: #40a9ff;
+  width: 100vw;
+  height: 100vh;
+}
+.tigc_area_tigc_header_nowdate {
+  margin-right: 10px;
+}
+/deep/ .ant-table-thead > tr > th {
+  background-color: #0ca2f9;
+  height: 9vh;
+  font-size: 4vh;
+  color: #fff;
+  padding: 0;
+}
+/deep/ .ant-table-tbody tr:nth-child(n) {
+  height: 9vh;
+  font-size: 4vh;
+  font-weight: bold;
+}
+.tigc_area_screen_footer {
+  float: right;
+  font-size: 4vh;
+}
+/deep/ .ant-table-thead > tr > th {
+  padding: 0px !important;
+}
+/deep/ .ant-table-tbody > tr > td {
+  padding: 0px !important;
+}
+/deep/ .ant-table-tbody > tr > td:nth-child(2) {
+  background-color: #0ca2f9;
+}
+.tigc_area_screen_info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+}
+.tigc_area_screen_information {
+  background-color: #cdfcfc;
+  font-size: 8vh;
+  text-align: center;
+  padding: 5vh;
+  border: solid 4px white;
+  border-radius: 5vh;
+  font-weight: 500;
+}
+.tigc-area-screen-missionaryText {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #fff;
+  text-align: center;
+  font-size: 4.5vh;
+  background-color: #0ca2f9;
+  height: 8vh;
+  line-height: 8vh;
+  padding: 0 16px;
+  border-radius: 10px;
+}

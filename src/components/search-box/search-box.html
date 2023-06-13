@@ -1,0 +1,6 @@
+<a-popover :visible="msPopoverVisible" :placement="msPlacement" trigger="click" overlayClassName="ms-popover" :autoAdjustOverflow="false" :destroyTooltipOnHide="true">
+  <template slot="content">
+    <a-table :bordered="true" :columns="getColumns" :data-source="tableData" :custom-row="msCustomRow" :locale="{emptyText: notFoundContent}" :pagination="false" :rowKey="rowKey" size="small" :scroll="msScroll"></a-table>
+  </template>
+  <a-input v-model="stateValue" ref="msInput" :placeholder="placeholder" :size="size" :allowClear="clear" :disabled="disabled" @blur="blur" @change="msChange" @pressEnter="pressEnter" />
+</a-popover>

@@ -1,0 +1,429 @@
+<div class="msun-source__main">
+  <!-- 诊室窗口 页面 -->
+  <a-card title="诊室管理">
+    <span slot="extra">
+      <a-tooltip placement="left">
+        <template slot="title">
+          点击查看诊室管理操作说明
+        </template>
+        <a-icon theme="filled" type="question-circle" @click="openHelpReadMe" style="cursor: pointer;color: #3491FA;font-size: 16px;" />
+      </a-tooltip>
+    </span>
+    <div class="table-page-search-wrapper">
+      <a-form layout="inline" style="margin:0">
+        <a-row type="flex" justify="start">
+          <a-col>
+            <a-form-item label="所属诊区名称">
+              <a-select show-search option-filter-prop="children" v-model="queryParams.clinicAreaId" placeholder="请选择" style="width: 200px;">
+                <a-select-option v-for="item in clinicAreaList" :key="item.clinicAreaId">
+                  {{item.clinicAreaName}}
+                </a-select-option>
+              </a-select>
+            </a-form-item>
+          </a-col>
+          <a-col>
+            <a-form-item label="诊室/窗口名称">
+              <a-input class="common-input" @pressEnter="handleQuery" v-model="queryParams.roomName" placeholder="请输入"></a-input>
+            </a-form-item>
+          </a-col>
+          <!--<a-col>
+            <a-form-item label="别名">
+              <a-input class="common-input" v-model="queryParams.roomNameAlias" placeholder="请输入"></a-input>
+            </a-form-item>
+          </a-col>-->
+          <a-col>
+            <a-form-model-item label="场景类型" prop="sceneTypeStr" :label-col="{ span: 8 }" :wrapperCol="{ span: 12 }">
+              <a-select show-search option-filter-prop="children" allowClear v-model="queryParams.sceneType" placeholder="请选择" style="width: 200px;">
+                <a-select-option v-for="item in sceneTypeList" @click="querySceneSubtypeTwo(item)" :key="`${item.dictCode}`">
+                  {{ item.dictName }}
+                </a-select-option>
+              </a-select>
+            </a-form-model-item>
+          </a-col>
+          <a-col>
+            <a-form-model-item label="场景子类型" prop="subTypeStr" :label-col="{ span: 8 }" :wrapperCol="{ span: 12 }">
+              <a-select show-search option-filter-prop="children" allowClear v-model="queryParams.sceneSubtype" placeholder="请选择" style="width: 200px;">
+                <a-select-option v-for="item in sceneSubTypeList" :key="`${item.subtypeCode}`">
+                  {{ item.subtypeName }}
+                </a-select-option>
+              </a-select>
+            </a-form-model-item>
+          </a-col>
+          <a-col>
+            <a-form-item label="科室查询" prop="deptIds">
+              <a-select mode="multiple" show-search option-filter-prop="children" @change="handleQuery" :filter-option="filterOption" style="width: 200px" placeholder="请选择" v-model="queryParams.deptIds" :dropdownMatchSelectWidth="false" class="aaa">
+                <a-select-option v-for="item in departmentList" :key="item.deptId">
+                  <template>
+                    <a-row>
+                      <a-col>
+                        {{ item.deptName }}
+                      </a-col>
+                    </a-row>
+                  </template>
+                </a-select-option>
+              </a-select>
+            </a-form-item>
+          </a-col>
+          <a-col>
+            <a-form-item>
+              <a-button type="primary" icon="search" @click="handleQuery">查询</a-button>
+              <a-button type="danger" icon="reload" class="head-reset" @click="resetQuery">重置</a-button>
+              <a-button type="primary" icon="plus" class="head-add_equipment" @click="openAddModal">新增</a-button>
+              <!--
+              <a-popconfirm title="确定同步数据吗?" ok-text="确定" cancel-text="取消" @confirm="confirmSync" @cancel="cancelSync">
+                <a-button type="primary" icon="undo" :loading="loadingSync">同步</a-button>
+              </a-popconfirm>
+              -->
+              <!-- 需要加一个action -->
+              <!-- <a-upload :customRequest="uploadExcel" name="file" :multiple="false" :headers="headers" accept=".xlsx,.xls">
+                <a-button> <a-icon type="upload" />导入</a-button>
+              </a-upload> -->
+            </a-form-item>
+          </a-col>
+        </a-row>
+      </a-form>
+    </div>
+  </a-card>
+  <a-card>
+    <a-table ref="table" class="content-table" size="middle" :columns="columns" :data-source="roomList" :loading="loading" :pagination="false" :row-key="(record)=>record.roomId">
+      <span slot="action" slot-scope="text, record">
+        <a-button type="link" ghost @click="handleUpdate(record)" style="color:#1890ff;">编辑</a-button>
+        <a-popconfirm title="确定删除该诊室/窗口吗?" ok-text="确定" cancel-text="取消" @confirm="confirm(record)" @cancel="cancelPop">
+          <a-button type="link" style="color:red">删除</a-button>
+        </a-popconfirm>
+      </span>
+
+      <span slot="roomAddress" slot-scope="text, record">
+        <template>
+          <editable-cell :text="text" @change="onCellChange(record.roomId, 'roomAddress', $event)" />
+        </template>
+      </span>
+
+      <span slot="allowOnlineRoomDoc" slot-scope="text, record">
+        <template v-if="record.allowOnlineRoomDoc === '1'">
+          <a-tag color="#87d068">
+            医生
+          </a-tag>
+        </template>
+        <template v-else-if="record.allowOnlineRoomDoc === '0'">
+          <a-tag color="#f50">
+            诊室
+          </a-tag>
+        </template>
+      </span>
+
+      <span slot="enableFlag" slot-scope="text, record">
+        <template v-if="record.enableFlag === '1'">
+          <a-tag color="#87d068">
+            启用
+          </a-tag>
+        </template>
+        <template v-else>
+          <a-tag color="#f50">
+            停用
+          </a-tag>
+        </template>
+      </span>
+      <span slot="deptNameRender" slot-scope="text, record">
+        <template v-for="item in record.departmentVOS">
+          <a-row>
+            <a-col>
+              {{ item.deptName }}
+            </a-col>
+          </a-row>
+        </template>
+      </span>
+      <span slot="shiftCodeJudge" slot-scope="text, record">
+        {{ text === '1' ? '开启' : '关闭' }}
+      </span>
+    </a-table>
+    <br />
+    <a-pagination v-model="queryParams.pageNum" :total="total" show-size-changer :pageSize.sync="queryParams.pageSize" @showSizeChange="showSizeChange" @change="queryList" :show-total="total => `共${total}条` "> </a-pagination>
+  </a-card>
+
+  <!-- 诊室/窗口 新增-修改 -->
+  <a-drawer :title="title" :visible.sync="open" width="55%" @close="cancel">
+    <a-form-model ref="formRef" :model="formModify" :rules="rules">
+      <a-collapse v-model="activeKey">
+        <a-collapse-panel key="1" header="基础信息">
+          <a-row>
+            <a-col :span="12">
+              <a-form-model-item v-if="formModify.dictCode === '2'" label="诊室/窗口名称" prop="roomName" :label-col="{ span: 8 }" :wrapperCol="{ span: 12 }">
+                <a-input v-model="formModify.roomName" placeholder="请输入" disabled style="width: 200px;" />
+              </a-form-model-item>
+              <a-form-model-item v-if="formModify.dictCode !== '2'" label="诊室/窗口名称" prop="roomName" :label-col="{ span: 8 }" :wrapperCol="{ span: 12 }">
+                <a-input v-model="formModify.roomName" placeholder="请输入" style="width: 200px;" />
+              </a-form-model-item>
+            </a-col>
+            <a-col :span="12">
+              <a-form-model-item label="别名" prop="roomNameAlias" :label-col="{ span: 8 }" :wrapperCol="{ span: 12 }">
+                <a-input v-model="formModify.roomNameAlias" placeholder="请输入" style="width: 200px;" />
+              </a-form-model-item>
+            </a-col>
+          </a-row>
+          <a-row>
+            <a-col :span="12">
+              <a-form-model-item label="所属诊区" prop="clinicAreaStr" :label-col="{ span: 8 }" :wrapperCol="{ span: 12 }">
+                <a-select show-search option-filter-prop="children" v-model="formModify.clinicAreaStr" :dropdownMatchSelectWidth="false" placeholder="请选择" style="width: 200px;">
+                  <a-select-option v-for="item in clinicAreaList" :key="`${item.clinicAreaId}|${item.clinicAreaName}`">
+                    {{item.clinicAreaName}}
+                  </a-select-option>
+                </a-select>
+              </a-form-model-item>
+            </a-col>
+            <a-col :span="12">
+              <a-form-model-item label="排序号" prop="shiftPriority" :label-col="{ span: 8 }" :wrapperCol="{ span: 12 }">
+                <a-input type="number" v-model="formModify.sortNo" placeholder="请输入" style="width: 200px;" />
+              </a-form-model-item>
+            </a-col>
+          </a-row>
+          <a-row>
+            <a-col :span="12" v-if="formModify.roomId">
+              <a-form-model-item label="场景类型" v-if="formModify.dictCode === '2'" prop="sceneTypeStr" :label-col="{ span: 8 }" :wrapperCol="{ span: 12 }">
+                <a-select show-search option-filter-prop="children" @change="querySceneSubtype(formModify)" v-model="formModify.sceneTypeStr" placeholder="请选择" style="width: 200px;">
+                  <a-select-option v-for="item in sceneTypeList" :key="`${item.dictName}|${item.dictCode}`" disabled>
+                    {{ item.dictName }}
+                  </a-select-option>
+                </a-select>
+              </a-form-model-item>
+              <a-form-model-item label="场景类型" v-if="formModify.dictCode !== '2'" prop="sceneTypeStr" :label-col="{ span: 8 }" :wrapperCol="{ span: 12 }">
+                <a-select show-search option-filter-prop="children" @change="querySceneSubtype(formModify)" v-model="formModify.sceneTypeStr" placeholder="请选择" style="width: 200px;">
+                  <a-select-option v-for="item in sceneTypeList" :key="`${item.dictName}|${item.dictCode}`">
+                    {{ item.dictName }}
+                  </a-select-option>
+                </a-select>
+              </a-form-model-item>
+            </a-col>
+            <a-col :span="12" v-else="formModify.roomId">
+              <a-form-model-item label="场景类型" prop="sceneTypeStr" :label-col="{ span: 8 }" :wrapperCol="{ span: 12 }">
+                <a-select show-search option-filter-prop="children" @change="querySceneSubtype(formModify)" v-model="formModify.sceneTypeStr" placeholder="请选择" style="width: 200px;">
+                  <a-select-option v-for="item in sceneTypeListExcludeMedical" :key="`${item.dictName}|${item.dictCode}`">
+                    {{ item.dictName }}
+                  </a-select-option>
+                </a-select>
+              </a-form-model-item>
+            </a-col>
+            <a-col :span="12">
+              <a-form-model-item label="场景子类型" v-if="formModify.dictCode === '2'" prop="subTypeStr" :label-col="{ span: 8 }" :wrapperCol="{ span: 12 }">
+                <a-select show-search option-filter-prop="children" v-model="formModify.subTypeStr" placeholder="请选择" style="width: 200px;">
+                  <a-select-option v-for="item in sceneSubTypeList" :key="`${item.subtypeCode}|${item.subtypeName}`" disabled>
+                    {{ item.subtypeName }}
+                  </a-select-option>
+                </a-select>
+              </a-form-model-item>
+              <a-form-model-item label="场景子类型" v-if="formModify.dictCode !== '2'" prop="subTypeStr" :label-col="{ span: 8 }" :wrapperCol="{ span: 12 }">
+                <a-select show-search option-filter-prop="children" v-model="formModify.subTypeStr" placeholder="请选择" style="width: 200px;">
+                  <a-select-option v-for="item in sceneSubTypeList" :key="`${item.subtypeCode}|${item.subtypeName}`">
+                    {{ item.subtypeName }}
+                  </a-select-option>
+                </a-select>
+              </a-form-model-item>
+            </a-col>
+          </a-row>
+          <a-row>
+            <a-col :span="12">
+              <a-form-model-item label="分诊限制" prop="allowOnlineRoomDoc" :label-col="{ span: 8 }" :wrapperCol="{ span: 12 }">
+                <a-select v-model="formModify.allowOnlineRoomDoc" placeholder="请选择">
+                  <a-select-option value="1">
+                    医生
+                  </a-select-option>
+                  <a-select-option value="0">
+                    诊室
+                  </a-select-option>
+                </a-select>
+              </a-form-model-item>
+            </a-col>
+            <a-col :span="12">
+              <a-form-model-item label="诊室标识" prop="roomSign" :label-col="{ span: 8 }" :wrapperCol="{ span: 16}">
+                <a-input v-model="formModify.roomSign" placeholder="请输入" style="width: 200px;" />
+              </a-form-model-item>
+            </a-col>
+          </a-row>
+        </a-collapse-panel>
+        <a-collapse-panel key="2" header="配置信息">
+          <a-row>
+            <a-col :span="12" v-if="formModify.subTypeStr === '2005|PACS'">
+              <a-form-model-item label="检查模式" prop="checkModal" :label-col="{ span: 8 }" :wrapperCol="{ span: 12 }">
+                <a-select v-model="formModify.checkModal" placeholder="请选择">
+                  <a-select-option v-for="item in modalTypeList" :value="item.value" :key="item.value">
+                    {{item.name}}
+                  </a-select-option>
+                </a-select>
+              </a-form-model-item>
+            </a-col>
+            <a-col :span="12" v-if="formModify.subTypeStr === '1001|医生'">
+              <a-form-model-item label="允许超时时间" prop="overTimeBanTriage" :label-col="{ span: 8 }" :wrapperCol="{ span: 12 }">
+                <a-input-number v-model="formModify.overTimeBanTriage" :min="0" :max="2000" />
+              </a-form-model-item>
+            </a-col>
+            <a-col :span="12" v-if="formModify.subTypeStr === '1001|医生'">
+              <a-form-model-item label="是否允许提前分诊" prop="shiftCodeJudge" :label-col="{ span: 8 }" :wrapperCol="{ span: 12 }">
+                <a-select v-model="formModify.shiftCodeJudge" placeholder="请选择">
+                  <a-select-option v-for="item in [{label:'关闭',value: '0'},{label:'开启',value:'1'}]" v-model="item.value" :key="item.value">
+                    {{item.label}}
+                  </a-select-option>
+                </a-select>
+              </a-form-model-item>
+            </a-col>
+            <a-col :span="12">
+              <a-form-model-item label="诊室地点" prop="roomAddress" :label-col="{ span: 8 }" :wrapperCol="{ span: 12}">
+                <a-input type="textarea" v-model="formModify.roomAddress" placeholder="请输入" />
+              </a-form-model-item>
+            </a-col>
+            <a-col :span="12">
+              <a-form-model-item label="是否启用" prop="enableFlag" :label-col="{ span: 8 }" :wrapperCol="{ span: 12 }">
+                <a-select v-model="formModify.enableFlag" placeholder="请选择">
+                  <a-select-option value="1">
+                    启用
+                  </a-select-option>
+                  <a-select-option value="0">
+                    停用
+                  </a-select-option>
+                </a-select>
+              </a-form-model-item>
+            </a-col>
+          </a-row>
+          <a-row>
+            <a-col :span="12">
+              <a-form-model-item label="上午接诊时间" prop="morningAppointmentTime" :label-col="{ span: 9 }" :wrapperCol="{ span: 13 }">
+                <a-time-picker v-model="formModify.morningAppointmentStartTime" :defaultValue="moment('00:00', 'HH:mm')" format="HH:mm" /> -
+                <a-time-picker v-model="formModify.morningAppointmentEndTime" :defaultValue="moment('00:00', 'HH:mm')" format="HH:mm" />
+              </a-form-model-item>
+            </a-col>
+            <a-col :span="12">
+              <a-form-model-item label="下午接诊时间" prop="afternoonAppointmentTime" :label-col="{ span: 9 }" :wrapperCol="{ span: 13 }">
+                <a-time-picker v-model="formModify.afternoonAppointmentStartTime" :defaultValue="moment('00:00', 'HH:mm')" format="HH:mm" /> -
+                <a-time-picker v-model="formModify.afternoonAppointmentEndTime" :defaultValue="moment('00:00', 'HH:mm')" format="HH:mm" />
+              </a-form-model-item>
+            </a-col>
+          </a-row>
+          <a-row>
+            <a-col :span="12">
+              <a-form-model-item label="分诊年龄限制" prop="ofAgeTriage" :label-col="{ span: 8 }" :wrapperCol="{ span: 12 }">
+                <a-input type="number" v-model="formModify.ofAgeTriage" placeholder="请输入" style="width: 200px;" :min="0" :max="120"/>
+              </a-form-model-item>
+            </a-col>
+            <a-col :span="12">
+              <a-form-model-item label="分诊性别限制" prop="ofSexTriage" :label-col="{ span: 12 }" :wrapperCol="{ span: 12 }">
+                <a-select v-model="formModify.ofSexTriage" placeholder="请选择">
+                  <a-select-option value="0">
+                    未设置
+                  </a-select-option>
+                  <a-select-option value="1">
+                    男
+                  </a-select-option>
+                  <a-select-option value="2">
+                    女
+                  </a-select-option>
+                </a-select>
+              </a-form-model-item>
+            </a-col>
+          </a-row>
+          <a-row>
+            <a-col>
+              <a-form-model-item label="诊室权限" prop="deptIds" :label-col="{ span: 4 }" :wrapperCol="{ span: 20 }">
+                <a-select mode="multiple" show-search option-filter-prop="children" :filter-option="filterOptionRoom" style="width: 100%" placeholder="请选择" v-model="formModify.deptIds" :dropdownMatchSelectWidth="false" class="aaa">
+                  <a-select-option v-for="item in departmentList" :key="item.deptId">
+                    <template>
+                      {{ item.deptName }}
+                    </template>
+                  </a-select-option>
+                </a-select>
+              </a-form-model-item>
+            </a-col>
+          </a-row>
+          <a-row>
+            <a-col v-if="formModify.subTypeStr === '3001|取药'">
+              <a-form-model-item label="药材类型" prop="catagoryIds" :label-col="{ span: 4 }" :wrapperCol="{ span: 20 }">
+                <a-select mode="multiple" @change="changeSelectCatagory"" show-search option-filter-prop="children" :filter-option="filterOptionRoom" style="width: 100%" placeholder="请选择" v-model="formModify.catagoryIds" :dropdownMatchSelectWidth="false" class="aaa">
+                  <a-select-option v-for="item in catagoryIdList" :key="item.catagoryId">
+                    <template>
+                      {{ item.catagoryName }}
+                    </template>
+                  </a-select-option>
+                </a-select>
+              </a-form-model-item>
+            </a-col>
+          </a-row>
+        </a-collapse-panel>
+      </a-collapse>
+    </a-form-model>
+    <!-- <div slot="footer" class="dialog-footer">
+      <a-button type="primary" @click="submitForm" :loading="loadingSubmit">提 交</a-button>
+      <a-button @click="cancel">取 消</a-button>
+    </div> -->
+    <div
+      :style="{
+      position: 'absolute',
+      bottom: 0,
+      width: '100%',
+      borderTop: '1px solid #e8e8e8',
+      padding: '10px 16px',
+      textAlign: 'center',
+      left: 0,
+      background: '#fff',
+      borderRadius: '0 0 4px 4px',
+    }"
+    >
+      <a-button @click="submitForm" :loading="loadingSubmit" type="primary" size="large" style="margin: 0 12px;">
+        提交
+      </a-button>
+      <a-button @click="cancel" size="large" style="margin: 0 12px;">
+        取消
+      </a-button>
+    </div>
+  </a-drawer>
+  <a-drawer title="诊室管理文档说明" placement="right" width="54%" height="100%" destroyOnClose :closable="true" :visible="visibleHelp" @close="onCloseHelp">
+    <div class="content_contain">
+      <h3>简介</h3>
+      <p>诊室管理中场景类型尤为重要，其次是诊室权限维护的完整</p>
+      <p class="p_common">功能说明</p>
+      <ul>
+        <li><strong>诊室/窗口名称：</strong> 诊室名称要通俗易懂（例如：内科一诊室，内科二诊室等）</li>
+        <li><strong>所属诊区：</strong> 当前诊室属于哪个诊区选择哪个</li>
+        <li><strong>场景类型和场景子类型（重要）：</strong> 不同的诊室选择不同的场景（例如医技心电诊室，需要选择场景类型：医技，场景子类型：心电），若找不到想选择的场景，联系交付手册同事进行对应场景的开通</li>
+        <li>
+          <strong>分诊限制：</strong>
+          <ul>
+            <li>诊室：百灵分诊限制分到诊室,分诊台自助机分诊到诊室</li>
+            <li>医生：百灵可以分诊到医生，分诊台自助机分诊到医生</li>
+          </ul>
+        </li>
+        <li><strong>诊室标识：</strong> 当该诊室为 药房、PACS的诊室时，维护诊室标识后，屏幕上会展示诊室标识字体</li>
+        <li><strong>接诊时间：</strong> 处于接诊时间外时，自动给当前诊室医生下线，默认00：00为全天</li>
+        <li><strong>是否启用：</strong> 启用：该诊室正常使用，禁用：该诊室停止使用</li>
+        <li><strong>检查模态：</strong>当诊室场景类型选择医技PACS时，检查模态才会出现（PACS专属）</li>
+        <p class="sf-el-image" style="text-align: center;">
+          <el-image style="width: 100%; height: auto" :src="require('@/assets/help/fz_clinic_action.png')" :preview-src-list="previewSrcList"> </el-image>
+          <span class="demonstration">图一</span>
+        </p>
+        <li><strong>诊室页面的新增功能：</strong>诊室页面新增，选择对应诊区，场景类型需要额外注意（例如心电诊室选择心电场景类型），其他根据情况填写，如图二：</li>
+        <p class="sf-el-image" style="text-align: center;">
+          <el-image style="width: 100%; height: auto" :src="require('@/assets/help/fz_room_action.png')" :preview-src-list="previewSrcList"> </el-image>
+          <span class="demonstration">图二</span>
+        </p>
+        <li><strong>诊室页面的查询删除编辑功能：</strong>删除诊室时，若诊室未pacs诊室，会优先判断是否已经在pacs系统绑定。若已绑定则提示【当前诊室已经绑定了PACS诊室 无法修改/删除诊室！】</li>
+        <p class="sf-el-image" style="text-align: center;">
+          <el-image style="width: 100%; height: auto" :src="require('@/assets/help/fz_room_form.png')" :preview-src-list="previewSrcList"> </el-image>
+          <span class="demonstration">图三</span>
+        </p>
+        <li><strong>允许超时时间：</strong>设置号源时间后，若此诊室患者预约挂号超过允许超时时间，将不允许分诊。默认为0无限制。</li>
+        <p class="sf-el-image" style="text-align: center;">
+          <el-image style="width: 100%; height: auto" :src="require('@/assets/help/fz_room_cs.png')" :preview-src-list="previewSrcList"> </el-image>
+          <span class="demonstration">图四</span>
+        </p>
+        <li>
+          <strong>禁止提前分诊：</strong>
+          <ul>
+            <li>开启：下午号源不允许上午分诊</li>
+            <li>关闭：下午号源允许上午分诊</li>
+          </ul>
+        </li>
+        <p class="sf-el-image" style="text-align: center;">
+          <el-image style="width: 100%; height: auto" :src="require('@/assets/help/fz_room_tqfz.png')" :preview-src-list="previewSrcList"> </el-image>
+          <span class="demonstration">图五</span>
+        </p>
+      </ul>
+    </div>
+  </a-drawer>
+</div>

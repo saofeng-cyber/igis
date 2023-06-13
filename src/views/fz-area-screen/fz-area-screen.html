@@ -1,0 +1,309 @@
+<div class="tigc-fz-area-screen-main">
+  <div class="tigc-area-screen-a-card">
+    <el-card shadow="always" class="tigc_area_screen_hreader">
+      <a-row class="header">
+        <a-col :span="8">
+          <div class="header-img" @click="setting">
+            <img :src="arealogo" alt="" />
+          </div>
+        </a-col>
+        <a-col :span="10" class="header-title">{{clinicAreaName}}</a-col>
+        <a-col :span="6" class="header-right">
+          {{nowDate}}{{nowTime}}
+        </a-col>
+      </a-row>
+    </el-card>
+    <!-- <br> -->
+    <div class="data_table">
+      <div class="th-head">
+        <div
+          v-for="(item,index) in columns"
+          :key="index"
+          :style="{width:item.width}"
+          style="text-align: center;border-left: 1px solid #e8e8e8;display: flex;justify-content: center;align-items: center;height: 100%;"
+        >
+          {{item.title}}
+        </div>
+      </div>
+      <div class="th-tbody">
+        <div class="th-container">
+          <div class="th-content" v-for="(item,index) in queryList[pageNumber]">
+            <div
+              class="roomName"
+              style="width: 20%;color: rgba(0, 0, 0, 0.65);font-weight: bold;height: 100%;border-left: 1px solid #e8e8e8;;"
+            >
+              <div
+                v-if="item.roomName && item.roomName.length <= 8"
+                style="border-right:1px solid #e8e8e8;width: 100%;height: 100%;display: flex;align-items: center;justify-content: center;"
+              >
+                {{item.roomName}}
+              </div>
+              <div
+                v-else
+                style="width: 100%;height: 100%;display: flex;align-items: center;"
+              >
+                <marquee
+                  behavior="scroll"
+                  direction="left"
+                  scrollmount="8"
+                  scrolldelay="125"
+                  >{{item.roomName}}</marquee
+                >
+              </div>
+            </div>
+            <div
+              class="docName"
+              style="width: 12%;background-color: #0ca2f9;height: 100%;display: flex;align-items: center;justify-content: center;font-weight: bold;"
+            >
+              <div
+                v-if="item.docName && item.docName.length < 4"
+                style="color: var(--tigc_area_screen_docName);"
+              >
+                {{item.docName}}
+              </div>
+              <div slot="docName" v-else style="width: 100%;padding: 0 10px;">
+                <marquee
+                  behavior="scroll"
+                  direction="left"
+                  scrollmount="8"
+                  scrolldelay="125"
+                  style="display: flex;align-items:center;color: var(--tigc_area_screen_docName);"
+                >
+                  {{item.docName}}
+                </marquee>
+              </div>
+            </div>
+            <div
+              class="fzCallingQueueVOS"
+              style="width: 19%;color: var(--tigc_area_screen_zzjz)"
+            >
+              <div
+                v-if="item.fzCallingQueueVOS && item.fzCallingQueueVOS.length <= 8"
+              >
+                {{item.fzCallingQueueVOS}}
+              </div>
+              <div v-else style="width: 100%;padding: 0 10px;">
+                <marquee
+                  behavior="scroll"
+                  direction="left"
+                  scrollmount="8"
+                  scrolldelay="125"
+                  style="display: flex;align-items:center;"
+                >
+                  {{item.fzCallingQueueVOS}}
+                </marquee>
+              </div>
+            </div>
+            <div
+              class="fzWattingQueueVOS"
+              style="width: 26%;border-left: 1px solid #e8e8e8;height: 100%;display: flex;align-items: center;"
+            >
+              <div
+                v-if="item.fzWattingQueueVOS && item.fzWattingQueueVOS.length <= 10"
+                style="color: var(--tigc_area_screen_ddjz);padding: 0 10px;"
+              >
+                {{item.fzWattingQueueVOS}}
+              </div>
+              <div v-else style="width: 100%;padding: 0 10px;">
+                <marquee
+                  behavior="scroll"
+                  direction="left"
+                  scrollmount="8"
+                  scrolldelay="125"
+                  style="display: flex;align-items:center;color: var(--tigc_area_screen_ddjz);width: 100%;"
+                >
+                  {{item.fzWattingQueueVOS}}
+                </marquee>
+              </div>
+            </div>
+            <div
+              class="fzOverQueueVOS"
+              style="width: 23%;border-left: 1px solid #e8e8e8;height: 100%;display: flex;align-items: center;color: var(--tigc_area_screen_ghhz);justify-content: center;"
+            >
+              <div
+                v-if="item.fzOverQueueVOS && item.fzOverQueueVOS.length <= 10"
+              >
+                {{item.fzOverQueueVOS}}
+              </div>
+              <div v-else style="width: 100%;padding: 0 10px;">
+                <marquee
+                  behavior="scroll"
+                  direction="left"
+                  scrollmount="8"
+                  scrolldelay="125"
+                  style="display: flex;align-items:center;color: var(--tigc_area_screen_ghhz)"
+                >
+                  {{item.fzOverQueueVOS}}
+                </marquee>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <br />
+    <div class="tigc-area-screen-missionaryText">
+      <div
+        style="flex: 1;text-align: center;color: var(--tigc_area_screen_missionary);"
+      >
+        {{missionaryText}}
+      </div>
+    </div>
+
+    <div v-if="infoOpen" class="tigc_area_screen_info">
+      <div class="tigc_area_screen_information">
+        {{information}}
+      </div>
+    </div>
+
+    <a-modal
+      title="请输入屏幕的信息"
+      :visible.sync="macOpen"
+      width="60%"
+      @cancel="cancel"
+      :maskClosable="false"
+    >
+      <a-form-model ref="formRef" :model="paramsMac" :rules="rules">
+        <a-row>
+          <a-col :span="12">
+            <a-form-model-item
+              label="屏幕MAC"
+              prop="macAddr"
+              :label-col="{ span: 10 }"
+              :wrapperCol="{ span: 12 }"
+            >
+              <a-input
+                v-model="paramsMac.macAddr"
+                placeholder="请输入"
+                style="width: 25vw"
+              />
+            </a-form-model-item>
+          </a-col>
+        </a-row>
+        <a-row>
+          <a-col :span="12">
+            <a-form-model-item
+              label="屏幕Token"
+              prop="screenToken"
+              :label-col="{ span: 10 }"
+              :wrapperCol="{ span: 12 }"
+            >
+              <a-input
+                v-model="paramsMac.screenToken"
+                placeholder="请输入"
+                style="width: 25vw"
+              />
+            </a-form-model-item>
+          </a-col>
+        </a-row>
+        <a-row>
+          <a-col :span="12">
+            <a-form-model-item
+              label="通讯域名"
+              prop="screenURL"
+              :label-col="{ span: 10 }"
+              :wrapperCol="{ span: 12 }"
+            >
+              <a-input
+                v-model="paramsMac.screenURL"
+                placeholder="请输入"
+                style="width: 25vw"
+              />
+            </a-form-model-item>
+          </a-col>
+        </a-row>
+        <a-row>
+          <a-col :span="12">
+            <a-form-model-item
+              label="WS请求头"
+              prop="wsUrl"
+              :label-col="{ span: 10 }"
+              :wrapperCol="{ span: 12 }"
+            >
+              <a-select
+                v-model="paramsMac.wsUrl"
+                placeholder="请选择websocket连接时的请求头"
+                default-value="wss://"
+              >
+                <a-select-option value="ws://">
+                  ws://
+                </a-select-option>
+                <a-select-option value="wss://">
+                  wss://
+                </a-select-option>
+              </a-select>
+            </a-form-model-item>
+          </a-col>
+        </a-row>
+        <a-row>
+          <a-col :span="12">
+            <a-form-model-item
+              label="叫号次数"
+              prop="wsUrl"
+              :label-col="{ span: 10 }"
+              :wrapperCol="{ span: 12 }"
+            >
+              <a-select
+                v-model="callTimes"
+                placeholder="请选择叫号的次数"
+                :default-value="1"
+              >
+                <a-select-option :value="1">
+                  1次
+                </a-select-option>
+                <a-select-option :value="2">
+                  2次
+                </a-select-option>
+                <a-select-option :value="3">
+                  3次
+                </a-select-option>
+                <a-select-option :value="4">
+                  4次
+                </a-select-option>
+                <a-select-option :value="5">
+                  5次
+                </a-select-option>
+              </a-select>
+            </a-form-model-item>
+          </a-col>
+        </a-row>
+        <a-row>
+          <a-col :span="12">
+            <a-form-model-item
+              label="叫号脱敏配置"
+              prop="wsUrl"
+              :label-col="{ span: 10 }"
+              :wrapperCol="{ span: 12 }"
+            >
+              <a-select
+                v-model="isJhtm"
+                placeholder="请选择是或否"
+                default-value="wss://"
+              >
+                <a-select-option value="是">
+                  是
+                </a-select-option>
+                <a-select-option value="否">
+                  否
+                </a-select-option>
+              </a-select>
+            </a-form-model-item>
+          </a-col>
+        </a-row>
+        <a-row v-if="screenTypeByMac === 2">
+          <a-col :span="12">
+            <a-form-model-item style="text-align: center;">
+              <a-button type="primary" @click="resetScreen">
+                重置屏幕
+              </a-button>
+            </a-form-model-item>
+          </a-col>
+        </a-row>
+      </a-form-model>
+      <div slot="footer" class="dialog-footer">
+        <a-button type="primary" @click="setMacType">提 交</a-button>
+        <a-button @click="cancel">取 消</a-button>
+      </div>
+    </a-modal>
+  </div>
+</div>

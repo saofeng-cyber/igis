@@ -1,0 +1,42 @@
+@min-header-height: 48px;
+@max-header-height: 80px;
+.msun-source__main {
+  position: relative;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  // background-color: black;
+  .msun-source__header {
+    min-height: @min-header-height;
+    max-height: @max-header-height;
+    background-color: orange;
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
+    color: #fff;
+    .msun-source__header_left {
+      flex: 1;
+    }
+    .msun-source__header_right {
+    }
+  }
+  .link_text {
+    color: #fff;
+    font-size: 16px;
+  }
+  .msun-source__card {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    .msun-source__card_item {
+      margin: 6px;
+      width: calc(20% - 12px);
+      height: calc(50% - 12px);
+      background-color: #fff;
+      border-radius: 4px;
+    }
+  }
+}

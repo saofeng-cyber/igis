@@ -1,0 +1,656 @@
+<div class="msun-source__main">
+  <!-- 诊区 页面 -->
+  <a-card title="诊区管理">
+    <span slot="extra">
+      <a-tooltip placement="left">
+        <template slot="title"> 点击查看诊区管理操作说明 </template>
+        <a-icon
+          theme="filled"
+          type="question-circle"
+          @click="openHelpReadMe"
+          style="cursor: pointer; color: #3491fa; font-size: 16px"
+        />
+      </a-tooltip>
+    </span>
+    <div class="table-page-search-wrapper">
+      <a-form layout="inline" style="margin: 0">
+        <a-row type="flex" justify="start" aling="center">
+          <a-col>
+            <a-form-item label="诊区名称">
+              <a-input
+                class="common-input"
+                @pressEnter="handleQuery"
+                v-model="queryParams.clinicAreaName"
+                placeholder="请输入"
+              ></a-input>
+            </a-form-item>
+          </a-col>
+          <a-col>
+            <a-form-item label="诊区别名">
+              <a-input
+                class="common-input"
+                @pressEnter="handleQuery"
+                v-model="queryParams.clinicAreaAliasName"
+                placeholder="请输入"
+              ></a-input>
+            </a-form-item>
+          </a-col>
+          <a-col>
+            <a-form-item label="科室查询" prop="deptIds">
+              <a-select
+                mode="multiple"
+                show-search
+                option-filter-prop="children"
+                @change="handleQuery"
+                :filter-option="filterOption"
+                style="width: 200px"
+                placeholder="请选择"
+                v-model="queryParams.deptIds"
+                :dropdownMatchSelectWidth="false"
+              >
+                <a-select-option
+                  v-for="item in departmentList"
+                  :key="item.deptId"
+                >
+                  <template>
+                    <a-row>
+                      <a-col> {{ item.deptName }} </a-col>
+                    </a-row>
+                  </template>
+                </a-select-option>
+              </a-select>
+            </a-form-item>
+          </a-col>
+          <a-col>
+            <a-form-item>
+              <a-button type="primary" icon="search" @click="handleQuery"
+                >查询</a-button
+              >
+              <a-button
+                type="danger"
+                icon="reload"
+                class="head-reset"
+                @click="resetQuery"
+                >重置</a-button
+              >
+              <a-button
+                type="primary"
+                icon="plus"
+                class="head-add_equipment"
+                @click="openAddModal"
+                >新增</a-button
+              >
+              <!-- 需要加一个action -->
+              <!-- <a-upload :customRequest="uploadExcel" name="file" :multiple="false" :headers="headers" accept=".xlsx,.xls">
+                <a-button>
+                  <a-icon type="upload" />
+                  导入
+                </a-button>
+              </a-upload> -->
+            </a-form-item>
+          </a-col>
+        </a-row>
+      </a-form>
+    </div>
+  </a-card>
+  <a-card>
+    <a-table
+      ref="table"
+      class="content-table"
+      size="middle"
+      :columns="columns"
+      :data-source="clinicList"
+      :loading="loading"
+      :pagination="false"
+      :row-key="(record)=>record.clinicAreaId"
+    >
+      <span slot="deptName" slot-scope="text, record">
+        <template v-for="item in record.departmentVOS">
+          {{ item.deptName }}
+        </template>
+      </span>
+
+      <span slot="screenName" slot-scope="text, record">
+        <template v-for="item in record.fzScreenVOS">
+          {{ item.screenName }}
+        </template>
+      </span>
+
+      <span slot="screenMAC" slot-scope="text, record">
+        <template v-for="item in record.fzScreenVOS">
+          <template v-if="item.screenMac != ''">
+            <a-tag color="geekblue" style="font-size: 17px;">
+              {{ item.screenMac }}
+            </a-tag>
+          </template>
+          <template v-else>
+            <a-tag color="red"> -- </a-tag>
+          </template>
+        </template>
+      </span>
+
+      <span slot="enableFlag" slot-scope="text, record">
+        <template v-if="record.enableFlag === '1'">
+          <a-tag color="#87d068"> 启用 </a-tag>
+        </template>
+        <template v-else>
+          <a-tag color="#f50"> 停用 </a-tag>
+        </template>
+      </span>
+      <span slot="allowOnlineFlag" slot-scope="text, record">
+        <template v-if="record.allowOnlineFlag === '1'">
+          <a-tag color="#87d068"> 是 </a-tag>
+        </template>
+        <template v-else>
+          <a-tag color="#f50"> 否 </a-tag>
+        </template>
+      </span>
+      <span slot="allowCallFlag" slot-scope="text, record">
+        <template v-if="record.allowCallFlag === '1'">
+          <a-tag color="#87d068"> 开启 </a-tag>
+        </template>
+        <template v-else>
+          <a-tag color="#f50"> 关闭 </a-tag>
+        </template>
+      </span>
+      <span slot="isAutoTriage" slot-scope="text, record">
+        <template v-if="record.isAutoTriage === '1'">
+          <a-tag color="#87d068"> 是 </a-tag>
+        </template>
+        <template v-else>
+          <a-tag color="#f50"> 否 </a-tag>
+        </template>
+      </span>
+      <span slot="isPromptlyTriage" slot-scope="text, record">
+        <template v-if="record.isPromptlyTriage === '1'">
+          <a-tag color="#87d068"> 是 </a-tag>
+        </template>
+        <template v-else>
+          <a-tag color="#f50"> 否 </a-tag>
+        </template>
+      </span>
+      <span slot="todaySmcTriage" slot-scope="text, record">
+        <template v-if="record.todaySmcTriage === '1'">
+          <a-tag color="#87d068"> 是 </a-tag>
+        </template>
+        <template v-else>
+          <a-tag color="#f50"> 否 </a-tag>
+        </template>
+      </span>
+      <span slot="areaWhetherPay" slot-scope="text, record">
+        <template v-if="record.areaWhetherPay === '1'">
+          <a-tag color="#87d068"> 开启 </a-tag>
+        </template>
+        <template v-else>
+          <a-tag color="#f50"> 关闭 </a-tag>
+        </template>
+      </span>
+      <span slot="action" slot-scope="text, record">
+        <a-button
+          type="link"
+          ghost
+          @click="handleUpdate(record)"
+          style="color: #1890ff"
+          >编辑</a-button
+        >
+        <a-popconfirm
+          placement="topLeft"
+          ok-text="确定"
+          cancel-text="取消"
+          @confirm="handleUpdataFlag(record)"
+        >
+          <template slot="title">
+            <p>确定删除吗</p>
+          </template>
+          <a-button type="link" style="color: red" ghost color="#2db7f5"
+            >删除</a-button
+          >
+        </a-popconfirm>
+      </span>
+    </a-table>
+    <br />
+    <a-pagination
+      v-model="queryParams.pageNum"
+      :total="total"
+      show-size-changer
+      :pageSize.sync="queryParams.pageSize"
+      @showSizeChange="showSizeChange"
+      @change="queryList"
+      :show-total="total => `共${total}条` "
+    >
+    </a-pagination>
+  </a-card>
+
+  <!-- 诊区 新增-修改 -->
+  <a-drawer
+    :title="title"
+    :visible.sync="open"
+    width="55%"
+    @close="closeClinicModal"
+  >
+    <a-form-model ref="formRef" :model="formModify" :rules="rules">
+      <a-collapse v-model="activeKey">
+        <template #expandIcon="props">
+          <a-icon type="caret-right" :rotate="props.isActive ? 90 : 0" />
+        </template>
+        <a-collapse-panel key="1" :showArrow="false">
+          <template slot="header">
+            <span
+              style="font-size: 15px; font-weight: bold; color: rgb(86, 81, 81)"
+              ><a-icon
+                type="info-circle"
+                theme="filled"
+                style="margin-right: 8px"
+              />基础信息</span
+            >
+          </template>
+          <a-row>
+            <a-col :span="12">
+              <a-form-model-item
+                label="诊区名称"
+                prop="clinicAreaName"
+                :label-col="{ span: 12 }"
+                :wrapperCol="{ span: 12 }"
+              >
+                <a-input
+                  v-model="formModify.clinicAreaName"
+                  placeholder="请输入"
+                />
+              </a-form-model-item>
+            </a-col>
+            <a-col :span="12">
+              <a-form-model-item
+                label="诊区别名"
+                prop="clinicAreaAliasName"
+                :label-col="{ span: 12 }"
+                :wrapperCol="{ span: 12 }"
+              >
+                <a-input
+                  v-model="formModify.clinicAreaAliasName"
+                  placeholder="请输入"
+                />
+              </a-form-model-item>
+            </a-col>
+          </a-row>
+          <a-row>
+            <a-col :span="12">
+              <a-form-model-item
+                label="诊区权限"
+                prop="deptIds"
+                :label-col="{ span: 12 }"
+                :wrapperCol="{ span: 12 }"
+              >
+                <a-select
+                  mode="multiple"
+                  :disabled="true"
+                  show-search
+                  option-filter-prop="children"
+                  :filter-option="filterOption"
+                  style="width: 100%"
+                  placeholder="请选择"
+                  v-model="formModify.deptIds"
+                  :dropdownMatchSelectWidth="false"
+                >
+                  <a-select-option
+                    v-for="item in departmentList"
+                    :key="item.deptId"
+                  >
+                    <!-- {{ item.deptName }} -->
+                    <template>
+                      <a-row>
+                        <a-col> {{ item.deptName }} </a-col>
+                      </a-row>
+                    </template>
+                  </a-select-option>
+                </a-select>
+              </a-form-model-item>
+            </a-col>
+            <a-col :span="12">
+              <a-form-model-item
+                label="屏幕名称/屏幕MAC"
+                prop="screenIds"
+                :label-col="{ span: 12 }"
+                :wrapperCol="{ span: 12 }"
+              >
+                <a-select
+                  mode="multiple"
+                  show-search
+                  option-filter-prop="children"
+                  :filter-option="filterOption"
+                  style="width: 100%"
+                  placeholder="请选择"
+                  v-model="formModify.screenIds"
+                  :dropdownMatchSelectWidth="false"
+                >
+                  <a-select-option
+                    v-for="item in screenList"
+                    :key="item.screenId"
+                  >
+                    <template>
+                      <a-row>
+                        <a-col> {{ item.screenName }} </a-col>
+                      </a-row>
+                      <a-row>
+                        <a-col> {{ item.screenMac }} </a-col>
+                      </a-row>
+                    </template>
+                  </a-select-option>
+                </a-select>
+              </a-form-model-item>
+            </a-col>
+            <!-- <a-col :span="12">
+              <a-form-model-item label="屏幕MAC" prop="clinicAreaMac"  :label-col="{ span: 8 }" :wrapperCol= "{ span: 12 }">
+                <a-input v-model="formModify.clinicAreaMac" placeholder="请输入" />
+              </a-form-model-item>
+            </a-col> -->
+          </a-row>
+          <a-row>
+            <a-col :span="12">
+              <a-form-model-item
+                label="排序号"
+                prop="shiftPriority"
+                :label-col="{ span: 12 }"
+                :wrapperCol="{ span: 12 }"
+              >
+                <a-input
+                  type="number"
+                  v-model="formModify.sortNo"
+                  placeholder="请输入"
+                  style="width: 200px"
+                />
+              </a-form-model-item>
+            </a-col>
+          </a-row>
+        </a-collapse-panel>
+        <a-collapse-panel key="2" :showArrow="false">
+          <template slot="header">
+            <span
+              style="font-size: 15px; font-weight: bold; color: rgb(86, 81, 81)"
+              ><a-icon
+                type="setting"
+                theme="filled"
+                style="margin-right: 8px"
+              />配置信息</span
+            >
+          </template>
+          <a-row>
+            <a-col :span="12">
+              <a-form-model-item
+                label="是否启用"
+                prop="enableFlag"
+                :label-col="{ span: 12 }"
+                :wrapperCol="{ span: 12 }"
+              >
+                <a-select v-model="formModify.enableFlag" placeholder="请选择">
+                  <a-select-option value="1"> 启用 </a-select-option>
+                  <a-select-option value="0"> 停用 </a-select-option>
+                </a-select>
+              </a-form-model-item>
+            </a-col>
+            <a-col :span="12">
+              <a-form-model-item
+                label="是否线上分诊"
+                prop="allowOnlineFlag"
+                :label-col="{ span: 12 }"
+                :wrapperCol="{ span: 12 }"
+              >
+                <a-select
+                  v-model="formModify.allowOnlineFlag"
+                  placeholder="请选择"
+                >
+                  <a-select-option value="1"> 是 </a-select-option>
+                  <a-select-option value="0"> 否 </a-select-option>
+                </a-select>
+              </a-form-model-item>
+            </a-col>
+          </a-row>
+          <a-row>
+            <a-col :span="12">
+              <a-form-model-item
+                label="开启一叫一侯"
+                prop="allowCallFlag"
+                :label-col="{ span: 12 }"
+                :wrapperCol="{ span: 12 }"
+              >
+                <a-select
+                  v-model="formModify.allowCallFlag"
+                  placeholder="请选择"
+                >
+                  <a-select-option value="1"> 开启 </a-select-option>
+                  <a-select-option value="0"> 关闭 </a-select-option>
+                </a-select>
+              </a-form-model-item>
+            </a-col>
+            <a-col :span="12">
+              <a-form-model-item
+                label="是否自动分诊"
+                prop="isAutoTriage"
+                :label-col="{ span: 12 }"
+                :wrapperCol="{ span: 12 }"
+              >
+                <a-select
+                  v-model="formModify.isAutoTriage"
+                  placeholder="请选择"
+                >
+                  <a-select-option value="1"> 是 </a-select-option>
+                  <a-select-option value="0"> 否 </a-select-option>
+                </a-select>
+              </a-form-model-item>
+            </a-col>
+          </a-row>
+          <a-row>
+            <a-col :span="12">
+              <a-form-model-item
+                label="挂号后是否立即分诊"
+                prop="isPromptlyTriage"
+                :label-col="{ span: 12 }"
+                :wrapperCol="{ span: 12 }"
+              >
+                <a-select
+                  v-model="formModify.isPromptlyTriage"
+                  placeholder="请选择"
+                >
+                  <a-select-option value="1"> 是 </a-select-option>
+                  <a-select-option value="0"> 否 </a-select-option>
+                </a-select>
+              </a-form-model-item>
+            </a-col>
+            <a-col :span="12">
+              <a-form-model-item
+                label="门诊是否验证收费"
+                prop="areaWhetherPay"
+                :label-col="{ span: 12 }"
+                :wrapperCol="{ span: 12 }"
+              >
+                <a-select
+                  v-model="formModify.areaWhetherPay"
+                  placeholder="请选择"
+                >
+                  <a-select-option value="1"> 是 </a-select-option>
+                  <a-select-option value="0"> 否 </a-select-option>
+                </a-select>
+              </a-form-model-item>
+            </a-col>
+          </a-row>
+          <a-row>
+            <a-col :span="12">
+              <a-form-model-item
+                label="当日预约后是否立即分诊"
+                prop="todaySmcTriage"
+                :label-col="{ span: 12 }"
+                :wrapperCol="{ span: 12 }"
+              >
+                <a-select
+                  v-model="formModify.todaySmcTriage"
+                  placeholder="请选择"
+                >
+                  <a-select-option value="1"> 是 </a-select-option>
+                  <a-select-option value="0"> 否 </a-select-option>
+                </a-select>
+              </a-form-model-item>
+            </a-col>
+          </a-row>
+          <a-row>
+            <a-col :span="24">
+              <a-form-model-item
+                label="门诊排队模式"
+                prop="areaSignalModel"
+                :label-col="{ span: 6 }"
+                :wrapperCol="{ span: 18 }"
+              >
+                <a-select
+                  v-model="formModify.areaSignalModel"
+                  placeholder="请选择"
+                >
+                  <a-select-option value="1">
+                    <a-tooltip>
+                      按分诊时间排序，没有插队逻辑(非号源模式，不预约挂号也可分诊)
+                    </a-tooltip>
+                  </a-select-option>
+                  <a-select-option value="3">
+                    <a-tooltip>
+                      按预约挂号时间排序，回诊过号患者按当前分诊时间排序(号源模式，不预约挂号不允许分诊)
+                    </a-tooltip>
+                  </a-select-option>
+                  <a-select-option value="5">
+                    <a-tooltip>
+                      预约挂号按分诊时间排序，回诊过号患者按照队列类型插队步数插队(普通/预约患者不可以插队)(非号源模式，不预约挂号也可以分诊)
+                    </a-tooltip>
+                  </a-select-option>
+                  <a-select-option value="6">
+                    <a-tooltip>
+                      预约挂号按分诊时间排序，回诊过号患者强制按照队列类型插队步数插队(普通/预约患者也可以插队)(非号源模式，不预约挂号也可以分诊)
+                    </a-tooltip>
+                  </a-select-option>
+                  <a-select-option value="7">
+                    <a-tooltip>
+                      预约挂号按号源时间排序，回诊过号患者按照队列类型插队步数插队(普通/预约患者不能插队)(号源模式，不预约挂号不允许分诊)
+                    </a-tooltip>
+                  </a-select-option>
+                  <a-select-option value="8">
+                    <a-tooltip>
+                      预约挂号按号源时间排序，回诊过号患者强制按照队列类型插队步数插队(普通/预约患者可以插队)(号源模式，不预约挂号不允许分诊)
+                    </a-tooltip>
+                  </a-select-option>
+                </a-select>
+              </a-form-model-item>
+            </a-col>
+          </a-row>
+        </a-collapse-panel>
+      </a-collapse>
+    </a-form-model>
+    <div
+      :style="{
+      position: 'absolute',
+      bottom: 0,
+      width: '100%',
+      borderTop: '1px solid #e8e8e8',
+      padding: '10px 16px',
+      textAlign: 'center',
+      left: 0,
+      background: '#fff',
+      borderRadius: '0 0 4px 4px',
+    }"
+    >
+      <a-button
+        @click="submitForm"
+        :loading="loadingSubmit"
+        type="primary"
+        size="large"
+        style="margin: 0 12px"
+      >
+        提交
+      </a-button>
+      <a-button @click="cancel" size="large" style="margin: 0 12px">
+        取消
+      </a-button>
+    </div>
+    <!-- <div slot="footer" class="dialog-footer">
+      <a-button type="primary" :loading="loadingSubmit" @click="submitForm">提 交</a-button>
+      <a-button @click="cancel">取 消</a-button>
+    </div> -->
+  </a-drawer>
+
+  <a-drawer
+    title="诊区管理文档说明"
+    placement="right"
+    width="54%"
+    height="100%"
+    destroyOnClose
+    :closable="true"
+    :visible="visibleHelp"
+    @close="onCloseHelp"
+  >
+    <div class="content_contain">
+      <h3>简介</h3>
+      <p>
+        诊区管理中诊区权限十分重要，分诊台导医分诊权限鱼诊区科室权限也有关联，下面进行配置信息相关介绍
+      </p>
+      <p class="p_common">功能说明</p>
+      <ul>
+        <li>
+          <strong>诊区名称：</strong>
+          诊区名称要通俗易懂（例如：内科诊区，外科诊区等）
+        </li>
+        <li>
+          <strong>科室名称：</strong>
+          科室维护诊区下对应诊室的所有科室，尽量维护完整
+        </li>
+        <li>
+          <strong>是否启用：</strong> 启用：该诊区正常使用，禁用：该诊区停止使用
+        </li>
+        <li>
+          <strong>是否线上分诊：</strong> 开启线上分诊，百灵公众号有这个诊区
+        </li>
+        <li>
+          <strong>开启一叫一侯：</strong> 开启一叫一侯时，叫号
+          会先呼叫当前就诊患者，之后呼叫下一位等待患者
+        </li>
+        <li>
+          <strong>是否自动分诊：</strong>
+          开启自动分诊时，当前诊区患者正常自动分诊，关闭自动分诊当前诊区不能自动分诊（哪种类型患者自动分诊由哪种渠道的患者可以自动分诊配置控制）
+        </li>
+        <p class="sf-el-image" style="text-align: center">
+          <el-image
+            style="width: 100%; height: auto"
+            :src="require('@/assets/help/fz_clinic_tb.png')"
+            :preview-src-list="previewSrcList"
+          >
+          </el-image>
+          <span class="demonstration">图一</span>
+        </p>
+        <li>
+          <strong>诊区页面的新增功能：</strong
+          >在诊区页面新增后，需要注意可是名称的正确选择和诊区屏幕的正确选择，诊区权限维护的完整其他根据情况填写。
+        </li>
+        <p class="sf-el-image" style="text-align: center">
+          <el-image
+            style="width: 100%; height: auto"
+            :src="require('@/assets/help/fz_clinic_add.png')"
+            :preview-src-list="previewSrcList"
+          >
+          </el-image>
+          <span class="demonstration">图二</span>
+        </p>
+        <li><strong>诊区页面的查询删除编辑功能：</strong></li>
+        <p class="sf-el-image" style="text-align: center">
+          <el-image
+            style="width: 100%; height: auto"
+            :src="require('@/assets/help/fz_clinic_form.png')"
+            :preview-src-list="previewSrcList"
+          >
+          </el-image>
+          <span class="demonstration">图三</span>
+        </p>
+        <li>
+          <strong>诊区门诊是否收费：</strong
+          >新增诊区界面门诊是否验证收费可以限制门诊患者在分诊时是否校验收费逻辑
+        </li>
+        <li>
+          <strong>诊区排队模式：</strong
+          >新增诊区界面排队模式可以设置一个诊区的排队方式（前提配置【是否开启号源模式】配置为按照诊区进行设置）
+        </li>
+      </ul>
+    </div>
+  </a-drawer>
+</div>

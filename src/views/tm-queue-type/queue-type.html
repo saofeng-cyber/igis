@@ -1,0 +1,417 @@
+<div class="msun-source__main">
+  <!-- 队列类型 条件查询 -->
+  <a-card class="table-page-search-wrapper">
+    <!-- <a-form layout="inline" style="margin:0"> -->
+    <div
+      style="
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      "
+    >
+      <a-button
+        type="primary"
+        icon="plus"
+        class="head-add_equipment"
+        @click="handleAdd"
+        >新增</a-button
+      >
+      <a-tooltip placement="left">
+        <template slot="title"> 点击查看队列类型管理操作说明 </template>
+        <a-icon
+          theme="filled"
+          type="question-circle"
+          @click="openHelpReadMe"
+          style="cursor: pointer; color: #3491fa; font-size: 16px"
+        />
+      </a-tooltip>
+    </div>
+    <!-- </a-form> -->
+  </a-card>
+  <a-card>
+    <a-table
+      ref="table"
+      class="content-table"
+      size="middle"
+      :columns="columns"
+      :data-source="queueTypeData"
+      :loading="loading"
+      :pagination="false"
+      :row-key="(record)=>record.queueTypeId"
+    >
+      <span slot="specialRate" slot-scope="text, record">
+        <template v-if="record.queueTypeName === '普通'">
+          <span>{{ record.specialRate }}</span>
+        </template>
+        <template v-else>
+          <span>{{ record.specialRate }}%</span>
+        </template>
+      </span>
+
+      <span slot="queueTypePlace" slot-scope="text, record">
+        <template v-if="record.queueTypePlace === 0">
+          <span>无规则</span>
+        </template>
+        <template v-else-if="record.queueTypePlace === 1">
+          <span>置顶</span>
+        </template>
+        <template v-else-if="record.queueTypePlace === 2">
+          <span>置底</span>
+        </template>
+        <template v-else-if="record.queueTypePlace === 3">
+          <span>隔2插1</span>
+        </template>
+        <template v-else-if="record.queueTypePlace === 4">
+          <span>隔3插1</span>
+        </template>
+        <template v-else-if="record.queueTypePlace === 5">
+          <span>隔5插1</span>
+        </template>
+      </span>
+
+      <span slot="subtypeName" slot-scope="text, record">
+        <template>
+          <span
+            class="card-subtypeName"
+            :style="{background: record.queueTypeColor}"
+            >{{record.subtypeName}}</span
+          >
+        </template>
+      </span>
+
+      <span slot="queueTypeColor" slot-scope="text, record">
+        <template>
+          <div
+            class="card-table"
+            :style="{background: record.queueTypeColor}"
+          ></div>
+        </template>
+      </span>
+
+      <span slot="typeLegend" slot-scope="text, record">
+        <template>
+          <!--          <div class="card-table" :bodyStyle="bodyCss"-->
+          <!--            :style="{background: record.queueTypeColor, color: record.queueTypeFontColor, left: '16%'}" hoverable>-->
+          <!--            {{ record.queueTypeName }}-->
+          <!--          </div>-->
+          <span
+            :style="{background: record.queueTypeColor, color: record.queueTypeFontColor}"
+            style="padding: 10px 12px; border-radius: 12px"
+          >
+            {{ record.queueTypeName }}
+          </span>
+        </template>
+      </span>
+
+      <span slot="action" slot-scope="text, record">
+        <a-button type="link" color="#2db7f5" @click="editQueueType(record)"
+          >编辑</a-button
+        >
+        <template
+          v-if="record.queueTypeCode == '' || record.queueTypeCode == null"
+        >
+          <a-popconfirm
+            title="确定删除该队列类型吗?"
+            ok-text="确定"
+            cancel-text="取消"
+            @confirm="confirm(record)"
+            @cancel="cancelPop"
+          >
+            <a-button type="link" style="color: red">删除</a-button>
+          </a-popconfirm>
+        </template>
+      </span>
+
+      <span slot="triageDisplayType" slot-scope="text, record">
+        <template v-if="record.triageDisplayType === '1'">
+          <a-tag color="#87d068"> 是 </a-tag>
+        </template>
+        <template v-else>
+          <a-tag color="#f50"> 否 </a-tag>
+        </template>
+      </span>
+    </a-table>
+    <br />
+
+    <a-pagination
+      v-model="queryParams.pageNum"
+      :total="total"
+      :pageSizeOptions="['8', '10', '12', '16']"
+      show-size-changer
+      :pageSize.sync="queryParams.pageSize"
+      @showSizeChange="queryQueueTypeData"
+      @change="queryQueueTypeData"
+      :show-total="total => `共${total}条` "
+    >
+    </a-pagination>
+  </a-card>
+
+  <!-- 新增/编辑 队列类型 -->
+  <a-modal
+    :title="title"
+    :visible.sync="modalAdd"
+    width="800px"
+    @cancel="cancel"
+  >
+    <a-form-model
+      ref="formRef"
+      :model="formModify"
+      :rules="ruleForm"
+      layout="inline"
+      style="margin: 0"
+    >
+      <a-row type="flex" justify="start">
+        <a-col>
+          <a-form-model-item label="类型名称" prop="queueTypeName">
+            <a-input
+              class="common-input"
+              v-model="formModify.queueTypeName"
+              placeholder="请输入"
+              style="width: 160px"
+            >
+            </a-input>
+          </a-form-model-item>
+        </a-col>
+        <a-col>
+          <a-form-model-item label="类型简称" prop="queueTypeAlias">
+            <a-input
+              class="common-input"
+              v-model="formModify.queueTypeAlias"
+              placeholder="请输入"
+              style="width: 160px"
+            >
+            </a-input>
+          </a-form-model-item>
+        </a-col>
+        <!-- <a-col>
+          <a-form-model-item v-if="formModify.queueTypeId && formModify.queueTypeName === '普通'" label="数量"
+            prop="ordinaryNum">
+            <a-input-number placeholder="请输入" v-model="formModify.specialRate" class="common-input"></a-input-number>
+          </a-form-model-item>
+          <a-form-model-item v-if="formModify.queueTypeName !== '普通'" label="占普通比例" prop="specialRate">
+            <a-select style="width: 140px;" placeholder="请选择" v-model="formModify.specialRate">
+              <a-select-option :value=10>10%</a-select-option>
+              <a-select-option :value=20>20%</a-select-option>
+              <a-select-option :value=30>30%</a-select-option>
+              <a-select-option :value=50>50%</a-select-option>
+              <a-select-option :value=60>60%</a-select-option>
+              <a-select-option :value=80>80%</a-select-option>
+              <a-select-option :value=100>100%</a-select-option>
+            </a-select>
+          </a-form-model-item>
+        </a-col> -->
+      </a-row>
+
+      <a-row type="flex" justify="start">
+        <a-col>
+          <a-form-model-item label="插队步数" prop="queueTypePlace">
+            <a-select
+              placeholder="请选择"
+              v-model="formModify.queueTypePlace"
+              style="width: 160px"
+            >
+              <a-select-option :value="0">无规则</a-select-option>
+              <a-select-option :value="1">置顶</a-select-option>
+              <!--              <a-select-option :value=2>置底</a-select-option>-->
+              <a-select-option :value="3">隔2插1</a-select-option>
+              <a-select-option :value="4">隔3插1</a-select-option>
+              <a-select-option :value="5">隔5插1</a-select-option>
+            </a-select>
+          </a-form-model-item>
+        </a-col>
+        <a-col>
+          <a-form-model-item label="类型颜色请选择" prop="queueTypeColor">
+            <colorPicker
+              style="margin-top: 13px; border: 1px solid black"
+              v-model="formModify.queueTypeColor"
+              @change="headleChangeTypeColor"
+            />
+          </a-form-model-item>
+        </a-col>
+        <a-col>
+          <a-form-model-item
+            label="字体颜色请选择"
+            prop="queueTypeFontColor"
+            style="margin-left: 90px"
+          >
+            <colorPicker
+              style="margin-top: 13px; border: 1px solid black"
+              v-model="formModify.queueTypeFontColor"
+              @change="headleChangeFontColor"
+            />
+          </a-form-model-item>
+        </a-col>
+      </a-row>
+      <a-row type="flex" justify="start">
+        <a-col>
+          <a-form-model-item label="优先级" prop="queueTypePriority">
+            <a-input-number
+              placeholder="请输入"
+              v-model="formModify.queueTypePriority"
+              class="common-input"
+            ></a-input-number>
+          </a-form-model-item>
+        </a-col>
+        <a-col>
+          <a-form-model-item label="类型图例">
+            <template>
+              <a-card
+                class="card-table1"
+                :bodyStyle="bodyCss"
+                :style="{background: formModify.queueTypeColor, color: formModify.queueTypeFontColor}"
+                hoverable
+              >
+                {{ formModify.queueTypeName }}
+              </a-card>
+            </template>
+          </a-form-model-item>
+        </a-col>
+        <a-col :span="12">
+          <a-form-model-item
+            label="排序号"
+            :label-col="{ span: 8 }"
+            :wrapperCol="{ span: 12 }"
+          >
+            <a-input
+              type="number"
+              v-model="formModify.sortNo"
+              placeholder="请输入"
+              style="width: 200px"
+            />
+          </a-form-model-item>
+        </a-col>
+      </a-row>
+      <a-row type="flex" justify="start">
+        <a-col :span="12">
+          <a-form-model-item
+            label="分诊台是否展示"
+            prop="triageDisplayType"
+            :label-col="{ span: 8 }"
+            :wrapperCol="{ span: 12 }"
+          >
+            <a-select
+              v-model="formModify.triageDisplayType"
+              placeholder="请选择"
+              style="width: 200px"
+            >
+              <a-select-option value="1"> 是 </a-select-option>
+              <a-select-option value="0"> 否 </a-select-option>
+            </a-select>
+          </a-form-model-item>
+        </a-col>
+        <a-col>
+          <a-form-model-item
+            label="场景类型"
+            prop="sceneTypeStr"
+            :label-col="{ span: 8 }"
+            :wrapperCol="{ span: 12 }"
+          >
+            <a-select
+              show-search
+              option-filter-prop="children"
+              allowClear
+              v-model="formModify.sceneType"
+              placeholder="请选择"
+              style="width: 200px"
+            >
+              <a-select-option
+                v-for="item in sceneTypeList"
+                @click="querySceneSubtypeTwo(item)"
+                :key="`${item.dictCode}`"
+              >
+                {{ item.dictName }}
+              </a-select-option>
+            </a-select>
+          </a-form-model-item>
+        </a-col>
+        <a-col>
+          <a-form-model-item
+            label="场景子类型"
+            prop="subTypeStr"
+            :label-col="{ span: 8 }"
+            :wrapperCol="{ span: 12 }"
+          >
+            <a-select
+              show-search
+              option-filter-prop="children"
+              allowClear
+              v-model="formModify.subtypeCode"
+              placeholder="请选择"
+              style="width: 200px"
+            >
+              <a-select-option
+                v-for="item in sceneSubTypeList"
+                :key="`${item.subtypeCode}`"
+              >
+                {{ item.subtypeName }}
+              </a-select-option>
+            </a-select>
+          </a-form-model-item>
+        </a-col>
+      </a-row>
+    </a-form-model>
+    <div slot="footer" class="dialog-footer">
+      <a-button type="primary" @click="submitForm">确 定</a-button>
+      <a-button @click="cancel">取 消</a-button>
+    </div>
+  </a-modal>
+
+  <a-drawer
+    title="队列类型文档说明"
+    placement="right"
+    width="54%"
+    height="100%"
+    destroyOnClose
+    :closable="true"
+    :visible="visibleHelp"
+    @close="onCloseHelp"
+  >
+    <div class="content_contain">
+      <h3>简介</h3>
+      <p>队列类型主要用于屏幕上的数据的展示，分诊台队列的排序插队逻辑</p>
+      <p class="p_common">功能说明</p>
+      <ul>
+        <li>
+          <strong>队列简称：</strong>
+          队列简称应用于分诊台队列的前缀，屏幕患者前缀的展示等
+        </li>
+        <p class="sf-el-image" style="text-align: center">
+          <el-image
+            style="width: 100%; height: auto"
+            :src="require('@/assets/help/fz_queue_fztype.png')"
+            :preview-src-list="previewSrcList"
+          >
+          </el-image>
+          <span class="demonstration">图一</span>
+        </p>
+        <li>
+          <strong>默认规则：</strong
+          >患者队列的规则（无规则：顺序排列，置顶：排到队列顶部，隔二插一：间隔两个普通患者插入一个特殊患者）
+        </li>
+        <p class="sf-el-image" style="text-align: center">
+          <el-image
+            style="width: 100%; height: auto"
+            :src="require('@/assets/help/fz_queue_type.png')"
+            :preview-src-list="previewSrcList"
+          >
+          </el-image>
+          <span class="demonstration">图二</span>
+        </p>
+        <li>
+          <strong>队列信息可维护：</strong
+          >可根据医院具体需要修改对应的类型名称、类型简介、插队步数等信息，在此选择队列类型是否需要在分诊台显示。
+        </li>
+        <p class="sf-el-image" style="text-align: center">
+          <el-image
+            style="width: 100%; height: auto"
+            :src="require('@/assets/help/fz_queue_edit.png')"
+            :preview-src-list="previewSrcList"
+          >
+          </el-image>
+          <span class="demonstration">图三</span>
+        </p>
+      </ul>
+    </div>
+  </a-drawer>
+</div>
